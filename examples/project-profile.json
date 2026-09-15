@@ -1,0 +1,62 @@
+{
+  "id": "cccp-reference",
+  "repository": ".",
+  "default_branch": "main",
+  "delegation": {
+    "allowed": [
+      "internal_implementation",
+      "local_refactor",
+      "internal_structure",
+      "test_implementation",
+      "code_cleanup",
+      "specification_local_change",
+      "implementation_plan"
+    ],
+    "forbidden": [
+      "architecture_change",
+      "system_boundary_change",
+      "public_api_change",
+      "external_behavior_change",
+      "scope_expansion",
+      "new_dependency",
+      "data_model_change",
+      "protocol_contract_change",
+      "important_feature_removal",
+      "destructive_operation",
+      "release_workflow_change",
+      "push",
+      "force_push",
+      "remote_branch_change",
+      "remote_branch_delete"
+    ]
+  },
+  "permissions": {},
+  "verification_commands": [
+    [
+      "node",
+      "--test"
+    ],
+    [
+      "node",
+      "scripts/export-schemas.mjs",
+      "--check"
+    ]
+  ],
+  "context_path": "docs/ai",
+  "review": {
+    "triggers": [
+      "architecture_sensitive",
+      "cross_module_responsibility",
+      "public_api_or_contract",
+      "near_delegation_boundary",
+      "significant_plan_deviation",
+      "uncertain_decision_compliance",
+      "reality_context_conflict",
+      "profile_requires_review"
+    ],
+    "require_r3": false,
+    "human_acceptance": false,
+    "max_revision_attempts": 2,
+    "repeated_failure_limit": 2
+  }
+}

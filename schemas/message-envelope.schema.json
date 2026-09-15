@@ -1,0 +1,1979 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cccp:implementation:0.1:message-envelope",
+  "title": "CCCP v1.0 reference implementation contracts (provisional)",
+  "$defs": {
+    "Principal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "human",
+            "chatgpt",
+            "codex",
+            "bridge",
+            "repository"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "role"
+      ],
+      "additionalProperties": false
+    },
+    "Intent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "objective": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "objective"
+      ],
+      "additionalProperties": false
+    },
+    "Proposal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "intent_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "approach": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "trade_offs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "intent_id",
+        "approach",
+        "trade_offs",
+        "alternatives"
+      ],
+      "additionalProperties": false
+    },
+    "Decision": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "intent_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "proposal_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "goal": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "selected_approach": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "non_goals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "important_trade_offs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "rejected_alternatives": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "intent_id",
+        "proposal_id",
+        "goal",
+        "selected_approach",
+        "constraints",
+        "non_goals",
+        "important_trade_offs",
+        "rejected_alternatives"
+      ],
+      "additionalProperties": false
+    },
+    "Clause": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "Specification": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "decision_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "objective": {
+          "$ref": "#/$defs/Clause"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clause"
+          },
+          "minItems": 0
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clause"
+          },
+          "minItems": 0
+        },
+        "non_goals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clause"
+          },
+          "minItems": 0
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clause"
+          },
+          "minItems": 1
+        },
+        "invariants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clause"
+          },
+          "minItems": 0
+        },
+        "expected_behavior": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clause"
+          },
+          "minItems": 0
+        },
+        "verification_criteria": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clause"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "decision_id",
+        "objective",
+        "scope",
+        "constraints",
+        "non_goals",
+        "acceptance_criteria",
+        "invariants",
+        "expected_behavior",
+        "verification_criteria"
+      ],
+      "additionalProperties": false
+    },
+    "Delegation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "decision_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "allowed": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "internal_implementation",
+              "local_refactor",
+              "internal_structure",
+              "test_implementation",
+              "code_cleanup",
+              "specification_local_change",
+              "implementation_plan",
+              "architecture_change",
+              "system_boundary_change",
+              "public_api_change",
+              "external_behavior_change",
+              "scope_expansion",
+              "new_dependency",
+              "data_model_change",
+              "protocol_contract_change",
+              "important_feature_removal",
+              "destructive_operation",
+              "release_workflow_change",
+              "push",
+              "force_push",
+              "remote_branch_change",
+              "remote_branch_delete"
+            ]
+          },
+          "minItems": 0
+        },
+        "forbidden": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "internal_implementation",
+              "local_refactor",
+              "internal_structure",
+              "test_implementation",
+              "code_cleanup",
+              "specification_local_change",
+              "implementation_plan",
+              "architecture_change",
+              "system_boundary_change",
+              "public_api_change",
+              "external_behavior_change",
+              "scope_expansion",
+              "new_dependency",
+              "data_model_change",
+              "protocol_contract_change",
+              "important_feature_removal",
+              "destructive_operation",
+              "release_workflow_change",
+              "push",
+              "force_push",
+              "remote_branch_change",
+              "remote_branch_delete"
+            ]
+          },
+          "minItems": 0
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "decision_id",
+        "allowed",
+        "forbidden",
+        "paths"
+      ],
+      "additionalProperties": false
+    },
+    "Permissions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "Profile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "default_branch": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "delegation": {
+          "type": "object",
+          "properties": {
+            "allowed": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "internal_implementation",
+                  "local_refactor",
+                  "internal_structure",
+                  "test_implementation",
+                  "code_cleanup",
+                  "specification_local_change",
+                  "implementation_plan",
+                  "architecture_change",
+                  "system_boundary_change",
+                  "public_api_change",
+                  "external_behavior_change",
+                  "scope_expansion",
+                  "new_dependency",
+                  "data_model_change",
+                  "protocol_contract_change",
+                  "important_feature_removal",
+                  "destructive_operation",
+                  "release_workflow_change",
+                  "push",
+                  "force_push",
+                  "remote_branch_change",
+                  "remote_branch_delete"
+                ]
+              },
+              "minItems": 0
+            },
+            "forbidden": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "internal_implementation",
+                  "local_refactor",
+                  "internal_structure",
+                  "test_implementation",
+                  "code_cleanup",
+                  "specification_local_change",
+                  "implementation_plan",
+                  "architecture_change",
+                  "system_boundary_change",
+                  "public_api_change",
+                  "external_behavior_change",
+                  "scope_expansion",
+                  "new_dependency",
+                  "data_model_change",
+                  "protocol_contract_change",
+                  "important_feature_removal",
+                  "destructive_operation",
+                  "release_workflow_change",
+                  "push",
+                  "force_push",
+                  "remote_branch_change",
+                  "remote_branch_delete"
+                ]
+              },
+              "minItems": 0
+            }
+          },
+          "required": [
+            "allowed",
+            "forbidden"
+          ],
+          "additionalProperties": false
+        },
+        "permissions": {
+          "$ref": "#/$defs/Permissions"
+        },
+        "verification_commands": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "minItems": 1
+          },
+          "minItems": 0
+        },
+        "context_path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "review": {
+          "type": "object",
+          "properties": {
+            "triggers": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "uniqueItems": true
+            },
+            "require_r3": {
+              "type": "boolean"
+            },
+            "human_acceptance": {
+              "type": "boolean"
+            },
+            "max_revision_attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "repeated_failure_limit": {
+              "type": "integer",
+              "minimum": 2
+            }
+          },
+          "required": [
+            "triggers",
+            "require_r3",
+            "human_acceptance",
+            "max_revision_attempts",
+            "repeated_failure_limit"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "repository",
+        "default_branch",
+        "delegation",
+        "permissions",
+        "verification_commands",
+        "context_path",
+        "review"
+      ],
+      "additionalProperties": false
+    },
+    "Operation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "domain": {
+          "type": "string",
+          "enum": [
+            "internal_implementation",
+            "local_refactor",
+            "internal_structure",
+            "test_implementation",
+            "code_cleanup",
+            "specification_local_change",
+            "implementation_plan",
+            "architecture_change",
+            "system_boundary_change",
+            "public_api_change",
+            "external_behavior_change",
+            "scope_expansion",
+            "new_dependency",
+            "data_model_change",
+            "protocol_contract_change",
+            "important_feature_removal",
+            "destructive_operation",
+            "release_workflow_change",
+            "push",
+            "force_push",
+            "remote_branch_change",
+            "remote_branch_delete"
+          ]
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "permission": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "changes_decision": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "domain",
+        "paths",
+        "changes_decision",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "Repository": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "branch": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "commit": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "path",
+        "branch",
+        "commit"
+      ],
+      "additionalProperties": false
+    },
+    "Discovery": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/Repository"
+        },
+        "base_commit": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "working_tree_status": {
+          "type": "string",
+          "enum": [
+            "clean",
+            "dirty",
+            "not_git"
+          ]
+        },
+        "changed_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "related_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "architecture_observations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "reusable_implementations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "test_status": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "unknown"
+          ]
+        },
+        "test_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "context_conflicts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "repository",
+        "base_commit",
+        "working_tree_status",
+        "changed_files",
+        "related_files",
+        "architecture_observations",
+        "reusable_implementations",
+        "test_status",
+        "test_evidence",
+        "context_conflicts",
+        "observed_at",
+        "fingerprint"
+      ],
+      "additionalProperties": false
+    },
+    "ImplementationReport": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "specification_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "discovery_fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "changed_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "unexpected_deviations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "risk": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ]
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "specification_id",
+        "discovery_fingerprint",
+        "summary",
+        "changed_files",
+        "evidence",
+        "unexpected_deviations",
+        "risk",
+        "triggers"
+      ],
+      "additionalProperties": false
+    },
+    "RequirementEvidence": {
+      "type": "object",
+      "properties": {
+        "requirement_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "unknown"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "requirement_id",
+        "status",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "ReviewResult": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "report_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "review_level": {
+          "type": "string",
+          "enum": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        "reviewer": {
+          "$ref": "#/$defs/Principal"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPROVE",
+            "REVISION_RECOMMENDED",
+            "REPLAN_RECOMMENDED",
+            "BLOCKED"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "failed_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RequirementEvidence"
+          },
+          "minItems": 0
+        },
+        "implementation_status": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "unknown"
+          ]
+        },
+        "specification_compliance": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "unknown"
+          ]
+        },
+        "architecture_compliance": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "unknown"
+          ]
+        },
+        "boundary_violation": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "failure_signature": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "report_id",
+        "review_level",
+        "reviewer",
+        "decision",
+        "confidence",
+        "findings",
+        "evidence",
+        "failed_requirements",
+        "requirements",
+        "implementation_status",
+        "specification_compliance",
+        "architecture_compliance",
+        "boundary_violation",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "ChangeProposal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "decision_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "problem": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "suggested_change": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "trade_offs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "affected_boundaries": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "decision_id",
+        "problem",
+        "suggested_change",
+        "trade_offs",
+        "affected_boundaries",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "BlockedReport": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "IMPLEMENTATION_FAILURE",
+            "SPECIFICATION_FAILURE",
+            "ARCHITECTURE_FAILURE",
+            "AUTHORITY_BOUNDARY_EXCEEDED",
+            "REPOSITORY_FAILURE",
+            "LOOP_PROTECTION",
+            "MISSING_INFORMATION"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "required_resolution": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "reason",
+        "category",
+        "evidence",
+        "required_resolution"
+      ],
+      "additionalProperties": false
+    },
+    "ContextEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "HUMAN_DECISION",
+            "AI_PROPOSAL",
+            "AI_INFERENCE",
+            "REPOSITORY_FACT",
+            "HISTORICAL_CONTEXT"
+          ]
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "source_commit": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "generated_by": {
+          "$ref": "#/$defs/Principal"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "current",
+            "stale",
+            "historical"
+          ]
+        },
+        "decision_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "content",
+        "source_commit",
+        "updated_at",
+        "generated_by",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "Envelope": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "DISCOVERY_REQUEST"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "related_paths": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S"
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "related_paths"
+              ],
+              "additionalProperties": false
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "DISCOVERY_REPORT"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "$ref": "#/$defs/Discovery"
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "DESIGN_PROPOSAL"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "$ref": "#/$defs/Proposal"
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "DECISION_REQUEST"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "proposal_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                },
+                "question": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                }
+              },
+              "required": [
+                "proposal_id",
+                "question"
+              ],
+              "additionalProperties": false
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "DESIGN_DECISION"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "$ref": "#/$defs/Decision"
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "IMPLEMENT_REQUEST"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "decision_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                },
+                "specification_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                },
+                "delegation_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                }
+              },
+              "required": [
+                "decision_id",
+                "specification_id",
+                "delegation_id"
+              ],
+              "additionalProperties": false
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "IMPLEMENT_REPORT"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "$ref": "#/$defs/ImplementationReport"
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "REVIEW_REQUEST"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "report_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                },
+                "review_level": {
+                  "type": "string",
+                  "enum": [
+                    "R1",
+                    "R2",
+                    "R3"
+                  ]
+                }
+              },
+              "required": [
+                "report_id",
+                "review_level"
+              ],
+              "additionalProperties": false
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "REVIEW_RESULT"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "$ref": "#/$defs/ReviewResult"
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "CHANGE_PROPOSAL"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "$ref": "#/$defs/ChangeProposal"
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "REPLAN_PROPOSAL"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "$ref": "#/$defs/ChangeProposal"
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "const": "CCCP"
+            },
+            "version": {
+              "const": "1.0"
+            },
+            "message_type": {
+              "const": "BLOCKED_REPORT"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "repository": {
+              "$ref": "#/$defs/Repository"
+            },
+            "payload": {
+              "$ref": "#/$defs/BlockedReport"
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "parent_message_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "protocol",
+            "version",
+            "message_type",
+            "message_id",
+            "task_id",
+            "timestamp",
+            "repository",
+            "payload"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "$ref": "#/$defs/Envelope"
+}

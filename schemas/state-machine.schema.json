@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cccp:implementation:0.1:state-machine",
+  "type": "object",
+  "properties": {
+    "decision_state": {
+      "enum": [
+        "INTENT",
+        "PROPOSAL",
+        "DELIBERATION",
+        "DECISION_PENDING",
+        "APPROVED",
+        "SPECIFIED",
+        "DELEGATED",
+        "REJECTED",
+        "BLOCKED"
+      ]
+    },
+    "execution_state": {
+      "enum": [
+        "DISCOVERY",
+        "IMPLEMENTATION_PLANNED",
+        "IMPLEMENTING",
+        "VERIFYING",
+        "SPEC_REVIEW",
+        "REVIEW_ROUTING",
+        "ARCHITECTURE_REVIEW",
+        "HUMAN_ACCEPTANCE",
+        "REVISION",
+        "REPLAN_PROPOSED",
+        "BLOCKED",
+        "DONE"
+      ]
+    },
+    "revision_count": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "decision_state",
+    "execution_state",
+    "revision_count"
+  ],
+  "additionalProperties": false
+}

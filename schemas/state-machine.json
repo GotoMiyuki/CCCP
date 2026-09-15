@@ -1,0 +1,183 @@
+{
+  "protocol": "CCCP",
+  "version": "1.0",
+  "implementation_revision": "0.1",
+  "decision": {
+    "states": [
+      "INTENT",
+      "PROPOSAL",
+      "DELIBERATION",
+      "DECISION_PENDING",
+      "APPROVED",
+      "SPECIFIED",
+      "DELEGATED",
+      "REJECTED",
+      "BLOCKED"
+    ],
+    "transitions": [
+      [
+        "INTENT",
+        "PROPOSAL",
+        "propose"
+      ],
+      [
+        "PROPOSAL",
+        "DELIBERATION",
+        "deliberate"
+      ],
+      [
+        "DELIBERATION",
+        "DECISION_PENDING",
+        "requestDecision"
+      ],
+      [
+        "DECISION_PENDING",
+        "APPROVED",
+        "Human approve"
+      ],
+      [
+        "DECISION_PENDING",
+        "REJECTED",
+        "Human reject"
+      ],
+      [
+        "APPROVED",
+        "SPECIFIED",
+        "specify"
+      ],
+      [
+        "SPECIFIED",
+        "DELEGATED",
+        "Human delegate"
+      ]
+    ],
+    "refinements": {
+      "propose_from": [
+        "PROPOSAL",
+        "DELIBERATION"
+      ],
+      "deliberate_from": [
+        "DELIBERATION"
+      ]
+    },
+    "directed": [
+      "INTENT",
+      "APPROVED",
+      "Human directly supplies the chosen design (Guide section 32)"
+    ]
+  },
+  "execution": {
+    "states": [
+      "DISCOVERY",
+      "IMPLEMENTATION_PLANNED",
+      "IMPLEMENTING",
+      "VERIFYING",
+      "SPEC_REVIEW",
+      "REVIEW_ROUTING",
+      "ARCHITECTURE_REVIEW",
+      "HUMAN_ACCEPTANCE",
+      "REVISION",
+      "REPLAN_PROPOSED",
+      "BLOCKED",
+      "DONE"
+    ],
+    "transitions": [
+      [
+        "DISCOVERY",
+        "IMPLEMENTATION_PLANNED",
+        "plan with Discovery and authorization"
+      ],
+      [
+        "IMPLEMENTATION_PLANNED",
+        "IMPLEMENTING",
+        "begin with fresh Reality"
+      ],
+      [
+        "IMPLEMENTING",
+        "VERIFYING",
+        "report"
+      ],
+      [
+        "VERIFYING",
+        "SPEC_REVIEW",
+        "R1 APPROVE with evidence"
+      ],
+      [
+        "SPEC_REVIEW",
+        "REVIEW_ROUTING",
+        "R2 all requirements PASS"
+      ],
+      [
+        "REVIEW_ROUTING",
+        "DONE",
+        "R3 not required"
+      ],
+      [
+        "REVIEW_ROUTING",
+        "ARCHITECTURE_REVIEW",
+        "R3 required"
+      ],
+      [
+        "ARCHITECTURE_REVIEW",
+        "DONE",
+        "R3 APPROVE"
+      ],
+      [
+        "ARCHITECTURE_REVIEW",
+        "HUMAN_ACCEPTANCE",
+        "R3 APPROVE and profile requires acceptance"
+      ],
+      [
+        "HUMAN_ACCEPTANCE",
+        "DONE",
+        "Human accept"
+      ],
+      [
+        "VERIFYING",
+        "REVISION",
+        "REVISION_RECOMMENDED and loop policy permits"
+      ],
+      [
+        "VERIFYING",
+        "REPLAN_PROPOSED",
+        "REPLAN_RECOMMENDED"
+      ],
+      [
+        "SPEC_REVIEW",
+        "REVISION",
+        "REVISION_RECOMMENDED and loop policy permits"
+      ],
+      [
+        "SPEC_REVIEW",
+        "REPLAN_PROPOSED",
+        "REPLAN_RECOMMENDED"
+      ],
+      [
+        "ARCHITECTURE_REVIEW",
+        "REVISION",
+        "REVISION_RECOMMENDED and loop policy permits"
+      ],
+      [
+        "ARCHITECTURE_REVIEW",
+        "REPLAN_PROPOSED",
+        "REPLAN_RECOMMENDED"
+      ],
+      [
+        "REVISION",
+        "IMPLEMENTING",
+        "fresh Reality and new progress information"
+      ]
+    ],
+    "replan_handoff": {
+      "from": "REPLAN_PROPOSED",
+      "decision_layer": "DECISION_PENDING / Deliberation",
+      "return_to": "DISCOVERY",
+      "requires": "New Human-approved Decision + Specification + Delegation"
+    }
+  },
+  "common": {
+    "blocked": "Any state can enter BLOCKED with a structured reason",
+    "resume": "Return to recorded appropriate state after resolution; repository conflicts rediscover; authority changes require Human authorization; loop budgets cannot be silently reset",
+    "override": "Human may explicitly accept DONE or terminate BLOCKED; preserve review evidence and audit override"
+  }
+}
