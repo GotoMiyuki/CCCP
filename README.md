@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CCCP Reference Implementation
 
 根据 **CCCP v1.0 Design Guide** 实现的首版协议参考库。使用 Node.js 标准库，无第三方运行或测试依赖。
@@ -53,3 +54,7 @@ Bridge 的会话、去重和审计保存在内存中；可导出审计记录，�
 独立 R3 的机制已有实现；**本次代码本身尚未获得独立 ChatGPT R3 审查**。
 
 最近一轮优化修复了阻断原因覆盖、Human 终止后恢复、跨 Adapter 重复执行和 Git 暂存区指纹遗漏。当前 **103 项测试通过**；Schema 一致性与模拟工作流检查通过。
+=======
+# CCCP
+CCCP（ChatGPT ↔ Codex Collaboration Protocol）定义一种通用的软件工程协作协议，用于协调 User、ChatGPT（宏观架构顾问agent）、Codex（全栈工程agent）之间的高效合作。
+>>>>>>> f6b98d6fcadc2af1e2d2eb1ea22ce52de0c0e38b
