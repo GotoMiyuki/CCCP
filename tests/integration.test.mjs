@@ -122,6 +122,13 @@ test('adapter executes a declared operation and completes the real-file low-risk
   await assert.rejects(adapter.execute('op-1', () => {}), raises('OPERATION_ALREADY_ATTEMPTED'));
   e.report(codex, reportFixture(e)); e.applyReview(codex, reviewFixture(e, 'R1')); e.applyReview(codex, reviewFixture(e, 'R2')); e.route(codex); assert.equal(e.state, 'DONE');
 });
+test('adapter accepts Discovery canonical paths for a symlinked repository alias', async () => {
+  const directory = await temporaryRepository(); const alias = `${directory}-alias`;
+  await symlink(directory, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const e = new ExecutionLifecycle({ decision: approvalFixture({ repository: alias }) });
+  const result = await new CodexAdapter({ controller: e, actor: codex }).discover();
+  assert.equal(e.snapshot.discovery.repository.path, result.repository.path);
+});
 test('adapter cannot override fresh fingerprint or start after an unexpected file edit', async () => {
   const directory = await temporaryRepository(); const e = new ExecutionLifecycle({ decision: approvalFixture({ repository: directory }) });
   const adapter = new CodexAdapter({ controller: e, actor: codex }); const before = await adapter.discover();

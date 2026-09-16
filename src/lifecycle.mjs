@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { assert, check, immutable } from './contracts.mjs';
 import { requireRole, authorize, pathWithin } from './authority.mjs';
@@ -9,6 +10,14 @@ import { executionSession } from './execution-session.mjs';
 
 const controllerActor = { id: 'lifecycle-controller', role: 'codex' };
 const REVIEW_STATE = { R1: 'VERIFYING', R2: 'SPEC_REVIEW', R3: 'ARCHITECTURE_REVIEW' };
+// `resolve()` is lexical: on macOS it treats /var and /private/var as different
+// strings even though they identify the same directory. Discovery returns a
+// real path, so compare repository identities after canonicalizing existing paths.
+const repositoryIdentity = path => {
+  const absolute = resolve(path);
+  try { return realpathSync.native?.(absolute) ?? realpathSync(absolute); }
+  catch (error) { if (error.code === 'ENOENT') return absolute; throw error; }
+};
 
 export class ExecutionLifecycle {
   #state = 'DISCOVERY'; #approval; #audit; #discovery; #plan; #report; #implementer;
@@ -55,7 +64,7 @@ export class ExecutionLifecycle {
   }
   observe(actor, discovery) {
     requireRole(actor, 'codex'); this.#at('DISCOVERY', 'REVISION'); check('Discovery', discovery);
-    assert(resolve(discovery.repository.path) === resolve(this.profile.repository), 'REPOSITORY_MISMATCH', 'Discovery must target Project Profile repository');
+    assert(repositoryIdentity(discovery.repository.path) === repositoryIdentity(this.profile.repository), 'REPOSITORY_MISMATCH', 'Discovery must target Project Profile repository');
     this.#discovery = immutable(discovery); this.#version++; this.#audit.append('DISCOVERY_REPORT', actor, discovery);
   }
   checkOperation(actor, operation) {
@@ -175,7 +184,7 @@ export class ExecutionLifecycle {
     if (['SPECIFICATION_FAILURE', 'ARCHITECTURE_FAILURE'].some(category => this.#blocks.has(category))) requireRole(actor, 'human');
     if (this.#blocks.has('REPOSITORY_FAILURE')) {
       check('Discovery', discovery);
-      assert(resolve(discovery.repository.path) === resolve(this.profile.repository), 'REPOSITORY_MISMATCH', 'Rediscovery must target the same repository');
+      assert(repositoryIdentity(discovery.repository.path) === repositoryIdentity(this.profile.repository), 'REPOSITORY_MISMATCH', 'Rediscovery must target the same repository');
       this.#discovery = immutable(discovery); this.#plan = undefined; this.#reviews = {}; this.#report = undefined;
       this.#move('DISCOVERY', actor, { resolution, discovery });
     } else this.#move(this.#blockedFrom, actor, { resolution });
@@ -186,7 +195,7 @@ export class ExecutionLifecycle {
     this.#idle();
     const approved = this.#approved(decision);
     assert(approved.decision.id !== this.#approval.decision.id && approved.specification.id !== this.specification.id && approved.delegation.id !== this.delegation.id, 'NEW_AUTHORIZATION_REQUIRED', 'Replan requires new approved Decision, Specification and Delegation IDs');
-    assert(resolve(approved.profile.repository) === resolve(this.profile.repository), 'REPOSITORY_MISMATCH', 'A task cannot silently migrate repositories');
+    assert(repositoryIdentity(approved.profile.repository) === repositoryIdentity(this.profile.repository), 'REPOSITORY_MISMATCH', 'A task cannot silently migrate repositories');
     this.#approval = approved; this.#discovery = undefined; this.#plan = undefined; this.#report = undefined;
     this.#reviews = {}; this.#revisionCount = 0; this.#revisionPending = false; this.#failures.clear(); this.#progress.clear(); this.#clearBlocks(); this.#routing = undefined; this.#proposal = undefined;
     this.#move('DISCOVERY', actor, { new_approval: approved });
@@ -198,7 +207,7 @@ export class ExecutionLifecycle {
     assert(!this.#blocks.has('LOOP_PROTECTION'), 'LOOP_PROTECTION', 'Delegation replacement cannot erase loop protection');
     const approved = this.#approved(decision);
     assert(digest(approved.decision) === digest(this.#approval.decision) && digest(approved.specification) === digest(this.specification), 'NEW_DECISION_REQUIRED', 'Decision or Specification changes must follow Replan');
-    assert(approved.delegation.id !== this.delegation.id && resolve(approved.profile.repository) === resolve(this.profile.repository), 'NEW_AUTHORIZATION_REQUIRED', 'Requires fresh Human Delegation for the same repository');
+    assert(approved.delegation.id !== this.delegation.id && repositoryIdentity(approved.profile.repository) === repositoryIdentity(this.profile.repository), 'NEW_AUTHORIZATION_REQUIRED', 'Requires fresh Human Delegation for the same repository');
     this.#approval = approved; this.#discovery = undefined; this.#plan = undefined; this.#report = undefined; this.#reviews = {}; this.#routing = undefined; this.#proposal = undefined;
     this.#blocks.delete('AUTHORITY_BOUNDARY_EXCEEDED');
     // Fresh grants resolve authority only; unrelated causes remain pending.

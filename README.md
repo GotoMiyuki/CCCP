@@ -2,7 +2,7 @@
 
 根据 **CCCP v1.0 Design Guide** 实现的首版协议参考库。使用 Node.js 标准库，无第三方运行或测试依赖。
 
-冻结语义以原始 Design Guide 为准。包版本 `0.1.0` 是实现版本，消息中的协议版本仍为 `1.0`。新增 Schema 和实现规范均为可审查的实现草案，未宣布冻结 CCCP v1.1。
+冻结语义以原始 Design Guide 为准。包版本 `0.1.1` 是实现版本，消息中的协议版本仍为 `1.0`。新增 Schema 和实现规范均为可审查的实现草案，未宣布冻结 CCCP v1.1。
 
 ## 运行
 
@@ -41,6 +41,7 @@ node src/cli.mjs validate Profile examples/project-profile.json
 | 条款与实现、测试对应关系 | [docs/CONFORMANCE.md](docs/CONFORMANCE.md) |
 | 本次实现与验证报告 | [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md) |
 | 后续加固与回归结果 | [docs/OPTIMIZATION_REPORT.md](docs/OPTIMIZATION_REPORT.md) |
+| 开发日志 | [docs/development_logs/2026-09-16-v0.1.1-macos-compatibility.md](docs/development_logs/2026-09-16-v0.1.1-macos-compatibility.md) |
 | 对外导出 | `src/index.mjs` |
 | 机器可读产物 | `schemas/` |
 
