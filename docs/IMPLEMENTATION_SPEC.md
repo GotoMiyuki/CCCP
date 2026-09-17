@@ -2,6 +2,8 @@
 
 状态：Implementation Draft，可修改的内部实现约定。对应 CCCP v1.0；不更改 Design Guide 冻结的协议语义。
 
+Host Runtime M0/M1 扩展见 [HOST_RUNTIME_SPEC.md](HOST_RUNTIME_SPEC.md) 与 [ADR 0001](adr/0001-host-runtime-layer.md)。Runtime 位于既有三层之上，装配六类 Provider / Store；协议状态仍由 Decision / Execution Controller 的公共接口改变，工具仍经过 Adapter。`src/runtime/contracts.mjs` 单独维护 Runtime 数据校验，不改变 `src/contracts.mjs` 或既有生成 Schema。M1 仅提供模拟与内存能力，不提供跨进程恢复。
+
 ## 1. 授权与实现范围
 
 本次 Human 指令授权按 Design Guide 实现，并允许自主决定内部实现、目录组织、Schema 细节和测试方式。原始 Guide 保持不变。
