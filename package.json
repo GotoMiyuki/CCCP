@@ -9,6 +9,8 @@
     "test": "node --test",
     "check": "node scripts/export-schemas.mjs --check",
     "schemas": "node scripts/export-schemas.mjs",
-    "demo": "node examples/workflow.mjs"
+    "demo": "node examples/workflow.mjs",
+    "demo:runtime": "node examples/runtime-workflow.mjs",
+    "runtime": "node src/runtime/cli.mjs"
   }
 }
