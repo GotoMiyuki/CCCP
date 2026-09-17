@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { fork, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { ProcessToolRunner } from '../src/index.mjs';
+import { ProcessToolRunner, canonicalRepository } from '../src/index.mjs';
 import { operationFixture, approvalFixture, codex } from '../examples/fixtures.mjs';
 import { prepareSimulation } from '../examples/runtime-workflow.mjs';
 import { dockerHost } from './fixtures/docker-host.mjs';
@@ -17,13 +17,16 @@ after(async () => { for (const dir of dirs) await rm(dir, { recursive: true, for
 async function directory() { const dir = await mkdtemp(join(tmpdir(), 'cccp-docker-')); dirs.push(dir); return dir; }
 async function fixture(source, { write = true, policy = {} } = {}) {
   const dir = await directory(); await mkdir(join(dir, 'src')); await writeFile(join(dir, 'hidden.txt'), 'must not be visible');
+  // The Host registers real paths. On macOS, tmpdir() may use the /var alias
+  // while realpath resolves to /private/var, so model the registered identity.
+  const repository = canonicalRepository(dir);
   const runner = await ProcessToolRunner.create({ context: 'desktop-linux', image: process.env.CCCP_DOCKER_IMAGE, namespace: dir, bindings: { 'op-1': {
     domain: 'internal_implementation', paths: ['src'], write, argv: ['/usr/local/bin/node', '-e', source],
   } } });
   const request = { context: { task_id: 'task', state_version: 0, principal: codex, delegation_ref: 'delegation-1', workspace_ref: 'workspace', correlation_id: 'docker' },
-    attempt_id: 'attempt', operation: operationFixture(), delegation: approvalFixture({ repository: dir }).snapshot.delegation,
-    workspace: { task_id: 'task', workspace_ref: 'workspace', repository_identity: dir },
-    policy: { cwd: dir, filesystem_allowlist: ['src'], environment_allowlist: [], network: 'deny', tool_allowlist: ['op-1'], enforced: true,
+    attempt_id: 'attempt', operation: operationFixture(), delegation: approvalFixture({ repository }).snapshot.delegation,
+    workspace: { task_id: 'task', workspace_ref: 'workspace', repository_identity: repository },
+    policy: { cwd: repository, filesystem_allowlist: ['src'], environment_allowlist: [], network: 'deny', tool_allowlist: ['op-1'], enforced: true,
       timeout_ms: 10000, output_limit_bytes: 4096, resources: { memory_bytes: 134217728, cpu_ms: 10000, file_size_bytes: 1048576 }, ...policy }, simulation: false };
   return { dir, runner, request };
 }
