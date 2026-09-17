@@ -9,10 +9,9 @@ export function canonical(value) {
 export const digest = value => createHash('sha256').update(canonical(value)).digest('hex');
 
 export class AuditLog {
-  #entries = []; #clock;
-  constructor({ clock = () => new Date().toISOString() } = {}) { this.#clock = clock; }
+  #entries = [];
   append(type, actor, data) {
-    const entry = { sequence: this.#entries.length + 1, timestamp: this.#clock(), type,
+    const entry = { sequence: this.#entries.length + 1, timestamp: new Date().toISOString(), type,
       actor: structuredClone(actor), data: structuredClone(data), previous_hash: this.#entries.at(-1)?.hash ?? null };
     entry.hash = digest(entry);
     this.#entries.push(immutable(entry));

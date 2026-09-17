@@ -1,12 +1,14 @@
+import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
+import { promisify } from 'node:util';
 import { readdir, lstat, readlink, realpath } from 'node:fs/promises';
 import { resolve, relative, sep, isAbsolute } from 'node:path';
 import { assert, check, immutable } from './contracts.mjs';
 import { relativePath } from './authority.mjs';
 import { digest } from './audit.mjs';
-import { safeGit } from './safe-git.mjs';
 
+const exec = promisify(execFile);
 const ignored = new Set(['.git', 'node_modules', '.cccp', 'coverage']);
 export async function confinedPath(repository, path) {
   const root = await realpath(repository);
@@ -30,7 +32,7 @@ export async function confinedPath(repository, path) {
 export async function discover(repository, { relatedPaths = ['.'], context = [], architectureObservations = [], reusableImplementations = [], testStatus = 'unknown', testEvidence = [] } = {}) {
   const root = await realpath(repository);
   assert((await lstat(root)).isDirectory(), 'REPOSITORY_FAILURE', 'Repository path must be a directory');
-  const git = async args => (await safeGit(root, args)).stdout;
+  const git = async args => (await exec('git', ['-C', root, ...args], { windowsHide: true, maxBuffer: 16 * 1024 * 1024 })).stdout;
   let branch = null; let commit = null; let status = null;
   try { await git(['rev-parse', '--git-dir']); }
   catch (error) {

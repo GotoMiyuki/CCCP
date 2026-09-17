@@ -15,12 +15,12 @@ export class DecisionLifecycle {
     this.#profile = approveProfile(actor, profile, audit);
     this.#audit.append('INTENT_CONFIRMED', actor, intent);
   }
-  static directed({ intent, decision, specification, delegation, profile, actor, audit, clock = () => new Date().toISOString() }) {
+  static directed({ intent, decision, specification, delegation, profile, actor, audit }) {
     requireRole(actor, 'human'); check('Decision', decision);
     assert(decision.intent_id === intent.id, 'REFERENCE_MISMATCH', 'Directed Decision must refer to current Intent');
     const flow = new DecisionLifecycle({ intent, profile, actor, audit });
     flow.#decision = immutable(decision);
-    flow.#approval = immutable({ actor, timestamp: clock(), decision_id: decision.id });
+    flow.#approval = immutable({ actor, timestamp: new Date().toISOString(), decision_id: decision.id });
     flow.#move('APPROVED', actor, { decision, approval: flow.#approval, mode: 'Directed', note: 'Human supplies the already chosen design; no AI deliberation is fabricated' });
     flow.specify(actor, specification); flow.delegate(actor, delegation); return flow;
   }

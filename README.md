@@ -12,8 +12,6 @@
 npm test
 npm run check
 npm run demo
-npm run demo:runtime
-npm run runtime -- migrate .cccp/runtime.sqlite
 node src/cli.mjs discover .
 node src/cli.mjs validate Profile examples/project-profile.json
 ```
@@ -31,10 +29,6 @@ node src/cli.mjs validate Profile examples/project-profile.json
 - Git / 文件 Discovery、Context 来源分类、过期检查和审计记录。
 - 13 种消息的 Envelope / Payload 校验、会话范围、并发去重和不确定投递处理。
 - Codex Adapter 接口、进程内 Bridge、可运行演示和自动测试。
-- Host Runtime M0/M1：六端口 contract、内存/fake providers、认证上下文、进程内 CAS/幂等、模拟工具 Evidence 与 contract tests。
-- M2：SQLite 状态、证据、会话、持久 Bridge 与受验证恢复；M3 Docker 工具、Git worktree、持久租约和真实隔离验收已完成。
-
-Runtime 入口是 `HostRuntime.create({ providers, discovery? })`，通过 `src/index.mjs` 或 `src/runtime/index.mjs` 导入。完整装配示例见 [examples/runtime-workflow.mjs](examples/runtime-workflow.mjs)。`npm run demo:runtime` 经认证模拟会话、fake Agent、fake 工具、Artifact 校验和既有 Controller 完成流程；输出始终标为 `SIMULATION ONLY`。
 
 ## 文档与入口
 
@@ -44,14 +38,6 @@ Runtime 入口是 `HostRuntime.create({ providers, discovery? })`，通过 `src/
 | 实现约定、Schema、状态规则 | [docs/IMPLEMENTATION_SPEC.md](docs/IMPLEMENTATION_SPEC.md) |
 | Codex Adapter 接入边界 | [docs/CODEX_ADAPTER_SPEC.md](docs/CODEX_ADAPTER_SPEC.md) |
 | Bridge API 与身份边界 | [docs/BRIDGE_API_SPEC.md](docs/BRIDGE_API_SPEC.md) |
-| Host Runtime API、六端口与能力边界 | [docs/HOST_RUNTIME_SPEC.md](docs/HOST_RUNTIME_SPEC.md) |
-| Host Runtime 架构决策 | [docs/adr/0001-host-runtime-layer.md](docs/adr/0001-host-runtime-layer.md) |
-| SQLite、事务与恢复 | [docs/PERSISTENCE_SPEC.md](docs/PERSISTENCE_SPEC.md) |
-| Docker 工具、工作区和持久租约 | [docs/TOOL_RUNNER_SPEC.md](docs/TOOL_RUNNER_SPEC.md) |
-| M2 验证 | [docs/development_logs/2026-09-17-host-runtime-m2.md](docs/development_logs/2026-09-17-host-runtime-m2.md) |
-| M3 实现与验收 | [docs/development_logs/2026-09-17-host-runtime-m3.md](docs/development_logs/2026-09-17-host-runtime-m3.md) |
-| M0 冻结基线与 R1/R2 | [docs/development_logs/2026-09-17-host-runtime-m0.md](docs/development_logs/2026-09-17-host-runtime-m0.md) |
-| M1 验证与 R1/R2 | [docs/development_logs/2026-09-17-host-runtime-m1.md](docs/development_logs/2026-09-17-host-runtime-m1.md) |
 | 条款与实现、测试对应关系 | [docs/CONFORMANCE.md](docs/CONFORMANCE.md) |
 | 本次实现与验证报告 | [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md) |
 | 后续加固与回归结果 | [docs/OPTIMIZATION_REPORT.md](docs/OPTIMIZATION_REPORT.md) |
@@ -61,12 +47,10 @@ Runtime 入口是 `HostRuntime.create({ providers, discovery? })`，通过 `src/
 
 ## 使用边界
 
-这是可执行的协议核心和集成参考实现。M2 已提供 SQLite 状态、Artifact、会话、持久 Bridge 与受验证的崩溃恢复。M3 Docker 后端已用固定 digest 完成真实容器验收；真实 ChatGPT / Codex / MCP 接线和生产登录认证仍未实现。宿主负责提供真实身份与受限工具；不能将消息中的角色声明当作认证。
+这是可执行的协议核心和集成参考实现。真实 ChatGPT / Codex / MCP 接线、登录认证、操作系统沙箱和跨进程恢复尚未接入。宿主负责提供真实身份与受限工具；不能将消息中的角色声明当作认证。
 
 Bridge 的会话、去重和审计保存在内存中；可导出审计记录，但未提供崩溃后重放。审计哈希可检测记录改动，不是外部签名。代码无法仅凭自然语言判断一个实现是否暗中改变架构，仍需依据真实证据执行 R2 / R3。
 
 独立 R3 的机制已有实现；**本次代码本身尚未获得独立 ChatGPT R3 审查**。
 
-M0/M1 保留既有 104 项测试，并新增 Runtime contract 与 workflow 测试。当前结果与运行环境见 M1 验证日志。Runtime 标记为 `0.2.0-dev`，包版本保持 `0.1.1`，协议保持 `1.0`。
-
-M1 内存装配仍关闭 durable state/crash recovery。M2 可选 SQLite providers 使用内置 node:sqlite，要求 Node >=24.14，无新增 npm 包；凭证只存哈希。恢复通过既有 Controller 公共接口重放并验证审计，不接受请求上传的审批 snapshot。工具未知效果与不确定投递不自动重试。M3 Docker 后端已完成真实容器验收；真实模型接线属于 M4。
+最近一轮优化修复了阻断原因覆盖、Human 终止后恢复、跨 Adapter 重复执行和 Git 暂存区指纹遗漏。当前 **103 项测试通过**；Schema 一致性与模拟工作流检查通过。
