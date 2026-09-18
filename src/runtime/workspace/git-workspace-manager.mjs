@@ -37,7 +37,10 @@ export class GitWorkspaceManager extends WorkspaceManager {
     if (prior) {
       const value = JSON.parse(prior.data);
       requireRuntime(value.source_repository === source && value.base_revision === base && value.repository_ref === common, 'REFERENCE_MISMATCH', 'Registered workspace source/base cannot change');
-      return this.inspectWorkspace(workspace_ref);
+      // Recovery may reopen this manager while an orphan container still has
+      // the worktree mounted. Return the durable registration first; the
+      // recovery coordinator stops old execution before validating Git state.
+      return jsonCopy(value);
     }
     const target = resolve(this.root, digest(workspace_ref).slice(0, 24));
     requireRuntime(inside(this.root, target), 'INVALID_WORKSPACE', 'Worktree destination must stay within managed root');

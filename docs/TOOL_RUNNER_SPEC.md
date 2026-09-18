@@ -70,7 +70,7 @@ Host 先持久化 execution_binding 和 RUNNING，然后调度。容器名称由
 
 ## 验收方式
 
-`npm test` 运行本地契约、真实 Git/进程/SQLite 和 Docker 测试。实际测试要求 Node >=24.14、Git、可用 Linux Docker 与包含 `/usr/local/bin/node` 的固定镜像。
+`npm test` 默认运行本地契约、真实 Git/进程/SQLite，并明确跳过依赖外部环境的 Docker/真实 Agent E2E。Docker 测试需设置 `CCCP_DOCKER_TESTS=1`；M4 真实 Agent E2E 需设置 `CCCP_REAL_AGENT_TESTS=1`。实际测试要求 Node >=24.14、Git、可用 Linux Docker 与包含 `/usr/local/bin/node` 的固定镜像。
 
 在可信操作员准备镜像并记录 digest 后，PowerShell 执行：
 

@@ -153,6 +153,10 @@ test('manifest rejects missing ports, exaggerated capabilities and unavailable r
   await assert.rejects(capabilityManifest(providers, ['crash_recovery']), raises('UNSUPPORTED_CAPABILITY'));
   await assert.rejects(capabilityManifest(providers, ['future_magic']), raises('UNSUPPORTED_CAPABILITY'));
   await assert.rejects(capabilityManifest({ ...providers, tool: { run() {}, cancel() {}, inspect() {}, capabilities: async () => ({ simulation: false }) } }), raises('UNSUPPORTED_CAPABILITY'));
+  const reviewOnly = { deliberate() {}, implement() {}, review() {}, cancel() {}, inspect() {}, capabilities: async () => ({ simulation: false,
+    backend: 'codex-app-server', cancellation: true, recovery: true, independent_review: true, provider_id: 'review-only', review_boundary: 'independent-run' }) };
+  const incomplete = await capabilityManifest({ ...providers, agent: reviewOnly });
+  assert.equal(incomplete.capabilities.real_agents, false); assert.equal(incomplete.capabilities.independent_r3, false);
   await assert.rejects(HostRuntime.create({ providers }), raises('STORE_ALREADY_OWNED'));
   assert.equal(sim.host.manifest.capabilities.independent_r3, false);
   assert.throws(() => { sim.host.manifest.capabilities.durable_state = true; }, TypeError);

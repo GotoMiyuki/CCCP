@@ -1,0 +1,1188 @@
+{
+  "audit_format": "cccp-m4-e2e-v1",
+  "scenario": "recovery",
+  "captured_at": "2026-09-18T02:25:08.230Z",
+  "task_id": "m4-real-task",
+  "state": "HUMAN_ACCEPTANCE",
+  "repository_snapshot": {
+    "architecture_observations": [],
+    "base_commit": "d463b374764dcf075c1c6e96801e1bbce2778442",
+    "changed_files": [],
+    "context_conflicts": [],
+    "fingerprint": "732c8015fad46d859e64c58cb24a628718355682e68a4ba38c1a4affbdf85969",
+    "observed_at": "2026-09-18T02:23:20.129Z",
+    "related_files": [
+      "src/value.txt",
+      "tests/verify.mjs"
+    ],
+    "repository": {
+      "branch": null,
+      "commit": "d463b374764dcf075c1c6e96801e1bbce2778442",
+      "path": "C:\\Users\\99662\\AppData\\Local\\Temp\\cccp-m4-recovery-0WjHIf\\workspaces\\33340241593de14037307e1c"
+    },
+    "reusable_implementations": [],
+    "test_evidence": [],
+    "test_status": "unknown",
+    "working_tree_status": "clean"
+  },
+  "operation_count": 2,
+  "operations": [
+    {
+      "attempt_id": "recovery-apply",
+      "operation_id": "apply-agent-change",
+      "outcome": "SUCCEEDED",
+      "evidence_ref": {
+        "artifact_ref": "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+        "content_hash": "36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+        "evidence_id": "40dabec7-d90c-4760-858a-ecf21f1cdf2f"
+      },
+      "agent_run_id": "recovery-implementation"
+    },
+    {
+      "attempt_id": "recovery-test",
+      "operation_id": "run-fixture-tests",
+      "outcome": "SUCCEEDED",
+      "evidence_ref": {
+        "artifact_ref": "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df",
+        "content_hash": "ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df",
+        "evidence_id": "fa7b1090-a03e-4349-a457-6e590a8b6a9e"
+      },
+      "agent_run_id": null
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_ref": "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+      "content": "{\"format\":\"cccp-file-delta-v1\",\"source_run_id\":\"recovery-implementation\",\"changes\":[{\"path\":\"src/value.txt\",\"before_exists\":true,\"before_hash\":\"3e37195fe5c1a6876784bbefc13035b8dfea16bb0711f0f8285f03edafbe9597\",\"before_content_base64\":\"cGVuZGluZw0K\",\"after_exists\":true,\"after_hash\":\"ed1a545bb85e55816bbf9566b028b2a0bc456b88f49f6f266c0401048824194b\",\"after_content_base64\":\"cmVhZHkK\",\"changed\":true}]}",
+      "content_hash": "36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+      "created_at": "2026-09-18T02:24:15.914Z",
+      "evidence_id": "40dabec7-d90c-4760-858a-ecf21f1cdf2f",
+      "operation_id": "recovery-apply",
+      "principal": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "producer": "process-tool-runner",
+      "repository_snapshot": {
+        "bytes": 6,
+        "entries": 2,
+        "fingerprint": "f34de95866c5cae44ac25ca53b1008f9ee0b663311d55fe267d927f21db7d40b"
+      },
+      "simulation": false,
+      "status": "pass",
+      "task_id": "m4-real-task",
+      "type": "DIFF"
+    },
+    {
+      "artifact_ref": "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df",
+      "content": "{\"outcome\":\"SUCCEEDED\",\"stdout\":\"fixture pass\\n\",\"stderr\":\"\",\"exit_code\":0,\"started_at\":\"2026-09-18T02:24:16.095Z\",\"finished_at\":\"2026-09-18T02:24:17.967Z\",\"repository_before\":{\"fingerprint\":\"8876b34c79f525af3ed1df753b421bf0c9b1682d35445e857cc03eb365a4ac4a\",\"entries\":4,\"bytes\":181},\"repository_after\":{\"fingerprint\":\"8876b34c79f525af3ed1df753b421bf0c9b1682d35445e857cc03eb365a4ac4a\",\"entries\":4,\"bytes\":181},\"interruption_reason\":null,\"error_code\":null,\"process_tree_stopped\":true,\"execution\":{\"backend\":\"docker\",\"identity\":\"59bc0a8032d0e9e416ed1ee28096914a11b03a72df4b7703894d7e1898ccf072\",\"image\":\"node@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81\",\"paths\":[\"src\",\"tests\"],\"writable\":false,\"network\":\"none\",\"limits\":{\"timeout_ms\":30000,\"output_limit_bytes\":1048576,\"memory_bytes\":268435456,\"cpu_ms\":30000,\"file_size_bytes\":1048576}},\"simulation\":false}",
+      "content_hash": "ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df",
+      "created_at": "2026-09-18T02:24:17.968Z",
+      "evidence_id": "fa7b1090-a03e-4349-a457-6e590a8b6a9e",
+      "operation_id": "recovery-test",
+      "principal": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "producer": "process-tool-runner",
+      "repository_snapshot": {
+        "bytes": 181,
+        "entries": 4,
+        "fingerprint": "8876b34c79f525af3ed1df753b421bf0c9b1682d35445e857cc03eb365a4ac4a"
+      },
+      "simulation": false,
+      "status": "pass",
+      "task_id": "m4-real-task",
+      "type": "TEST_RUN"
+    }
+  ],
+  "agent_runs": [
+    {
+      "run_id": "recovery-implementation",
+      "kind": "implement",
+      "review_level": null,
+      "status": "COMPLETED",
+      "provider": "openai-codex-app-server",
+      "provider_kind": "codex-implementer",
+      "provider_instance": "codex-implementer:ae930dfe-a883-461d-8683-fd6fa0186add",
+      "model": "gpt-5.5",
+      "principal": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "execution_binding": {
+        "backend": "codex-app-server",
+        "pid": 39184,
+        "run_id": "recovery-implementation",
+        "thread_id": "01a0b253-5980-7400-ac08-25d9f7fc8c58",
+        "turn_id": "01a0b253-6db5-7d70-b442-b072142e36e9"
+      },
+      "output": {
+        "changed_files": [
+          "src/value.txt"
+        ],
+        "discovery_fingerprint": "732c8015fad46d859e64c58cb24a628718355682e68a4ba38c1a4affbdf85969",
+        "evidence": [
+          "Observed src/value.txt currently contains `pending\\r\\n`.",
+          "Observed tests/verify.mjs asserts src/value.txt must equal `ready\\n`.",
+          "Did not run acceptance tests or edit files because the requested mode was read-only proposal."
+        ],
+        "id": "implementation-proposal-1",
+        "risk": "low",
+        "specification_id": "spec-1",
+        "summary": "Read-only proposal: replace only src/value.txt with exact UTF-8 content `ready` followed by one newline. No files were edited.",
+        "triggers": [
+          "apply-agent-change"
+        ],
+        "unexpected_deviations": [
+          "PowerShell shell reads failed in the sandbox with CreateProcessWithLogonW failed: 2; repository files were inspected through a read-only filesystem read instead.",
+          "git status --short could not be independently confirmed because Git reported dubious ownership; supplied CCCP discovery reported working_tree_status clean."
+        ]
+      }
+    },
+    {
+      "run_id": "real-r3",
+      "kind": "review",
+      "review_level": "R3",
+      "status": "COMPLETED",
+      "provider": "openai-codex-app-server",
+      "provider_kind": "chatgpt-reviewer",
+      "provider_instance": "chatgpt-reviewer:0ab2778d-c625-4255-8ce8-d4251ef88a26",
+      "model": "gpt-5.5",
+      "principal": {
+        "id": "independent-chatgpt",
+        "role": "chatgpt"
+      },
+      "execution_binding": {
+        "backend": "codex-app-server",
+        "pid": 45960,
+        "run_id": "real-r3",
+        "thread_id": "01a0b254-3db7-7882-a1d5-cf5d78af7b97",
+        "turn_id": "01a0b254-51e2-7033-a00e-acdc688552e1"
+      },
+      "output": {
+        "id": "verified-r3",
+        "report_id": "implementation-proposal-1",
+        "review_level": "R3",
+        "reviewer": {
+          "id": "independent-chatgpt",
+          "role": "chatgpt"
+        },
+        "decision": "APPROVE",
+        "confidence": 1,
+        "findings": [],
+        "evidence": [
+          "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+          "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+        ],
+        "failed_requirements": [],
+        "requirements": [
+          {
+            "requirement_id": "OBJ-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+              "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+            ]
+          },
+          {
+            "requirement_id": "S-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+              "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+            ]
+          },
+          {
+            "requirement_id": "C-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+              "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+            ]
+          },
+          {
+            "requirement_id": "NG-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+              "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+            ]
+          },
+          {
+            "requirement_id": "AC-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+              "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+            ]
+          },
+          {
+            "requirement_id": "INV-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+              "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+            ]
+          },
+          {
+            "requirement_id": "EB-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+              "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+            ]
+          },
+          {
+            "requirement_id": "V-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+              "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+            ]
+          }
+        ],
+        "implementation_status": "pass",
+        "specification_compliance": "pass",
+        "architecture_compliance": "pass",
+        "boundary_violation": false,
+        "reason": "Frozen artifacts support the implementation and verification for the requested review level.",
+        "failure_signature": "/"
+      }
+    }
+  ],
+  "protocol_audit": [
+    {
+      "sequence": 1,
+      "timestamp": "2026-09-18T02:23:19.479Z",
+      "type": "PROFILE_APPROVED",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "context_path": "docs/ai",
+        "default_branch": "main",
+        "delegation": {
+          "allowed": [
+            "internal_implementation",
+            "local_refactor",
+            "internal_structure",
+            "test_implementation",
+            "code_cleanup",
+            "specification_local_change",
+            "implementation_plan"
+          ],
+          "forbidden": [
+            "architecture_change",
+            "system_boundary_change",
+            "public_api_change",
+            "external_behavior_change",
+            "scope_expansion",
+            "new_dependency",
+            "data_model_change",
+            "protocol_contract_change",
+            "important_feature_removal",
+            "destructive_operation",
+            "release_workflow_change",
+            "push",
+            "force_push",
+            "remote_branch_change",
+            "remote_branch_delete"
+          ]
+        },
+        "id": "default",
+        "permissions": {},
+        "repository": "C:\\Users\\99662\\AppData\\Local\\Temp\\cccp-m4-recovery-0WjHIf\\workspaces\\33340241593de14037307e1c",
+        "review": {
+          "human_acceptance": true,
+          "max_revision_attempts": 2,
+          "repeated_failure_limit": 2,
+          "require_r3": true,
+          "triggers": [
+            "architecture_sensitive",
+            "cross_module_responsibility",
+            "public_api_or_contract",
+            "near_delegation_boundary",
+            "significant_plan_deviation",
+            "uncertain_decision_compliance",
+            "reality_context_conflict",
+            "profile_requires_review"
+          ]
+        },
+        "verification_commands": [
+          [
+            "node",
+            "tests/verify.mjs"
+          ]
+        ]
+      },
+      "previous_hash": null,
+      "hash": "53e6b76dc9c5ce31d0de89730ab587ae08ce0c6229057efbc174e4b2fd716901"
+    },
+    {
+      "sequence": 2,
+      "timestamp": "2026-09-18T02:23:19.479Z",
+      "type": "INTENT_CONFIRMED",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "id": "intent-1",
+        "objective": "Implement a bounded internal change"
+      },
+      "previous_hash": "53e6b76dc9c5ce31d0de89730ab587ae08ce0c6229057efbc174e4b2fd716901",
+      "hash": "5f3ff8c0bd2d5ef74c2798d9e6f33e2e66b69509a2681abd1385d937ea0398ee"
+    },
+    {
+      "sequence": 3,
+      "timestamp": "2026-09-18T02:23:19.479Z",
+      "type": "DECISION_TRANSITION",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "from": "INTENT",
+        "to": "APPROVED",
+        "decision": {
+          "constraints": [
+            "Preserve public behavior"
+          ],
+          "goal": "Implement a bounded internal change",
+          "id": "decision-1",
+          "important_trade_offs": [],
+          "intent_id": "intent-1",
+          "non_goals": [
+            "No remote push"
+          ],
+          "proposal_id": "proposal-1",
+          "rejected_alternatives": [],
+          "selected_approach": "Use the approved internal implementation"
+        },
+        "approval": {
+          "actor": {
+            "id": "local-human",
+            "role": "human"
+          },
+          "timestamp": "2026-09-18T02:23:19.478Z",
+          "decision_id": "decision-1"
+        },
+        "mode": "Directed",
+        "note": "Human supplies the already chosen design; no AI deliberation is fabricated"
+      },
+      "previous_hash": "5f3ff8c0bd2d5ef74c2798d9e6f33e2e66b69509a2681abd1385d937ea0398ee",
+      "hash": "4531e3461c0b00997d3978783ac627b4d14752d87639c9f91fe203c5afc9ac0b"
+    },
+    {
+      "sequence": 4,
+      "timestamp": "2026-09-18T02:23:19.479Z",
+      "type": "DECISION_TRANSITION",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "from": "APPROVED",
+        "to": "SPECIFIED",
+        "specification": {
+          "acceptance_criteria": [
+            {
+              "id": "AC-1",
+              "text": "Expected internal result"
+            }
+          ],
+          "constraints": [
+            {
+              "id": "C-1",
+              "text": "Preserve public behavior"
+            }
+          ],
+          "decision_id": "decision-1",
+          "expected_behavior": [
+            {
+              "id": "EB-1",
+              "text": "Preserve public behavior"
+            }
+          ],
+          "id": "spec-1",
+          "invariants": [
+            {
+              "id": "INV-1",
+              "text": "Human retains authority"
+            }
+          ],
+          "non_goals": [
+            {
+              "id": "NG-1",
+              "text": "No remote push"
+            }
+          ],
+          "objective": {
+            "id": "OBJ-1",
+            "text": "Implement a bounded internal change"
+          },
+          "scope": [
+            {
+              "id": "S-1",
+              "text": "Internal files only"
+            }
+          ],
+          "verification_criteria": [
+            {
+              "id": "V-1",
+              "text": "Tests pass"
+            }
+          ]
+        }
+      },
+      "previous_hash": "4531e3461c0b00997d3978783ac627b4d14752d87639c9f91fe203c5afc9ac0b",
+      "hash": "49dbd8f3567908af8dba2c98daf33fb75585c19f6f72042a5721307a06ac83f0"
+    },
+    {
+      "sequence": 5,
+      "timestamp": "2026-09-18T02:23:19.479Z",
+      "type": "DECISION_TRANSITION",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "from": "SPECIFIED",
+        "to": "DELEGATED",
+        "delegation": {
+          "allowed": [
+            "internal_implementation",
+            "test_implementation"
+          ],
+          "decision_id": "decision-1",
+          "forbidden": [],
+          "id": "delegation-1",
+          "paths": [
+            "src",
+            "tests"
+          ]
+        }
+      },
+      "previous_hash": "49dbd8f3567908af8dba2c98daf33fb75585c19f6f72042a5721307a06ac83f0",
+      "hash": "d37bd3be2b7ab5f609a6d035a1d355af134f31d42bb9245d6a1020bff9090d7e"
+    },
+    {
+      "sequence": 6,
+      "timestamp": "2026-09-18T02:23:19.479Z",
+      "type": "EXECUTION_CREATED",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "decision": {
+          "state": "DELEGATED",
+          "intent": {
+            "id": "intent-1",
+            "objective": "Implement a bounded internal change"
+          },
+          "proposal": null,
+          "decision": {
+            "constraints": [
+              "Preserve public behavior"
+            ],
+            "goal": "Implement a bounded internal change",
+            "id": "decision-1",
+            "important_trade_offs": [],
+            "intent_id": "intent-1",
+            "non_goals": [
+              "No remote push"
+            ],
+            "proposal_id": "proposal-1",
+            "rejected_alternatives": [],
+            "selected_approach": "Use the approved internal implementation"
+          },
+          "specification": {
+            "acceptance_criteria": [
+              {
+                "id": "AC-1",
+                "text": "Expected internal result"
+              }
+            ],
+            "constraints": [
+              {
+                "id": "C-1",
+                "text": "Preserve public behavior"
+              }
+            ],
+            "decision_id": "decision-1",
+            "expected_behavior": [
+              {
+                "id": "EB-1",
+                "text": "Preserve public behavior"
+              }
+            ],
+            "id": "spec-1",
+            "invariants": [
+              {
+                "id": "INV-1",
+                "text": "Human retains authority"
+              }
+            ],
+            "non_goals": [
+              {
+                "id": "NG-1",
+                "text": "No remote push"
+              }
+            ],
+            "objective": {
+              "id": "OBJ-1",
+              "text": "Implement a bounded internal change"
+            },
+            "scope": [
+              {
+                "id": "S-1",
+                "text": "Internal files only"
+              }
+            ],
+            "verification_criteria": [
+              {
+                "id": "V-1",
+                "text": "Tests pass"
+              }
+            ]
+          },
+          "delegation": {
+            "allowed": [
+              "internal_implementation",
+              "test_implementation"
+            ],
+            "decision_id": "decision-1",
+            "forbidden": [],
+            "id": "delegation-1",
+            "paths": [
+              "src",
+              "tests"
+            ]
+          },
+          "profile": {
+            "context_path": "docs/ai",
+            "default_branch": "main",
+            "delegation": {
+              "allowed": [
+                "internal_implementation",
+                "local_refactor",
+                "internal_structure",
+                "test_implementation",
+                "code_cleanup",
+                "specification_local_change",
+                "implementation_plan"
+              ],
+              "forbidden": [
+                "architecture_change",
+                "system_boundary_change",
+                "public_api_change",
+                "external_behavior_change",
+                "scope_expansion",
+                "new_dependency",
+                "data_model_change",
+                "protocol_contract_change",
+                "important_feature_removal",
+                "destructive_operation",
+                "release_workflow_change",
+                "push",
+                "force_push",
+                "remote_branch_change",
+                "remote_branch_delete"
+              ]
+            },
+            "id": "default",
+            "permissions": {},
+            "repository": "C:\\Users\\99662\\AppData\\Local\\Temp\\cccp-m4-recovery-0WjHIf\\workspaces\\33340241593de14037307e1c",
+            "review": {
+              "human_acceptance": true,
+              "max_revision_attempts": 2,
+              "repeated_failure_limit": 2,
+              "require_r3": true,
+              "triggers": [
+                "architecture_sensitive",
+                "cross_module_responsibility",
+                "public_api_or_contract",
+                "near_delegation_boundary",
+                "significant_plan_deviation",
+                "uncertain_decision_compliance",
+                "reality_context_conflict",
+                "profile_requires_review"
+              ]
+            },
+            "verification_commands": [
+              [
+                "node",
+                "tests/verify.mjs"
+              ]
+            ]
+          },
+          "approval": {
+            "actor": {
+              "id": "local-human",
+              "role": "human"
+            },
+            "timestamp": "2026-09-18T02:23:19.478Z",
+            "decision_id": "decision-1"
+          }
+        }
+      },
+      "previous_hash": "d37bd3be2b7ab5f609a6d035a1d355af134f31d42bb9245d6a1020bff9090d7e",
+      "hash": "afbe54959561ad19cbf4598040f0a45761614e13b98dcf249f8c90ac73d8ecad"
+    },
+    {
+      "sequence": 7,
+      "timestamp": "2026-09-18T02:23:20.130Z",
+      "type": "DISCOVERY_REPORT",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "architecture_observations": [],
+        "base_commit": "d463b374764dcf075c1c6e96801e1bbce2778442",
+        "changed_files": [],
+        "context_conflicts": [],
+        "fingerprint": "732c8015fad46d859e64c58cb24a628718355682e68a4ba38c1a4affbdf85969",
+        "observed_at": "2026-09-18T02:23:20.129Z",
+        "related_files": [
+          "src/value.txt",
+          "tests/verify.mjs"
+        ],
+        "repository": {
+          "branch": null,
+          "commit": "d463b374764dcf075c1c6e96801e1bbce2778442",
+          "path": "C:\\Users\\99662\\AppData\\Local\\Temp\\cccp-m4-recovery-0WjHIf\\workspaces\\33340241593de14037307e1c"
+        },
+        "reusable_implementations": [],
+        "test_evidence": [],
+        "test_status": "unknown",
+        "working_tree_status": "clean"
+      },
+      "previous_hash": "afbe54959561ad19cbf4598040f0a45761614e13b98dcf249f8c90ac73d8ecad",
+      "hash": "b80162db3f2e849e2985167a513a696405f10cb98afb687dcd261a1ad4e7f223"
+    },
+    {
+      "sequence": 8,
+      "timestamp": "2026-09-18T02:23:20.284Z",
+      "type": "OPERATION_AUTHORIZATION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "operation": {
+          "changes_decision": false,
+          "description": "Apply the real Codex structured file change",
+          "domain": "internal_implementation",
+          "id": "apply-agent-change",
+          "paths": [
+            "src"
+          ]
+        },
+        "result": {
+          "allowed": true,
+          "reason": "Within delegation, permissions and declared Decision boundary"
+        }
+      },
+      "previous_hash": "b80162db3f2e849e2985167a513a696405f10cb98afb687dcd261a1ad4e7f223",
+      "hash": "a5f0b05475d0dd8ee5de556bd5f45fd9ddce2de6f8e7262bce29bffbf78edddf"
+    },
+    {
+      "sequence": 9,
+      "timestamp": "2026-09-18T02:23:20.284Z",
+      "type": "OPERATION_AUTHORIZATION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "operation": {
+          "changes_decision": false,
+          "description": "Run the fixture acceptance test",
+          "domain": "test_implementation",
+          "id": "run-fixture-tests",
+          "paths": [
+            "src",
+            "tests"
+          ]
+        },
+        "result": {
+          "allowed": true,
+          "reason": "Within delegation, permissions and declared Decision boundary"
+        }
+      },
+      "previous_hash": "a5f0b05475d0dd8ee5de556bd5f45fd9ddce2de6f8e7262bce29bffbf78edddf",
+      "hash": "5d2424cbfff9e0314ea41233d232f7e2a1527a89a7c013a4e239ba5b0638ccd9"
+    },
+    {
+      "sequence": 10,
+      "timestamp": "2026-09-18T02:23:20.284Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "from": "DISCOVERY",
+        "to": "IMPLEMENTATION_PLANNED",
+        "plan": {
+          "summary": "Bounded recovery fixture change",
+          "operations": [
+            {
+              "changes_decision": false,
+              "description": "Apply the real Codex structured file change",
+              "domain": "internal_implementation",
+              "id": "apply-agent-change",
+              "paths": [
+                "src"
+              ]
+            },
+            {
+              "changes_decision": false,
+              "description": "Run the fixture acceptance test",
+              "domain": "test_implementation",
+              "id": "run-fixture-tests",
+              "paths": [
+                "src",
+                "tests"
+              ]
+            }
+          ]
+        }
+      },
+      "previous_hash": "5d2424cbfff9e0314ea41233d232f7e2a1527a89a7c013a4e239ba5b0638ccd9",
+      "hash": "54fdc309a2a1d6521f544333ca8211906a54c62baa35b485c22b29a2886ab7e5"
+    },
+    {
+      "sequence": 11,
+      "timestamp": "2026-09-18T02:23:20.749Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "from": "IMPLEMENTATION_PLANNED",
+        "to": "IMPLEMENTING",
+        "progress": null
+      },
+      "previous_hash": "54fdc309a2a1d6521f544333ca8211906a54c62baa35b485c22b29a2886ab7e5",
+      "hash": "e90ce1ff6b4d00b8a8597e466f7ea26fc013db1699103de2808b5bb836360335"
+    },
+    {
+      "sequence": 12,
+      "timestamp": "2026-09-18T02:24:13.803Z",
+      "type": "OPERATION_AUTHORIZATION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "operation": {
+          "changes_decision": false,
+          "description": "Apply the real Codex structured file change",
+          "domain": "internal_implementation",
+          "id": "apply-agent-change",
+          "paths": [
+            "src"
+          ]
+        },
+        "result": {
+          "allowed": true,
+          "reason": "Within delegation, permissions and declared Decision boundary"
+        }
+      },
+      "previous_hash": "e90ce1ff6b4d00b8a8597e466f7ea26fc013db1699103de2808b5bb836360335",
+      "hash": "22093fdef564db77a30eea086f8601424e87786e4abac992de7d83af25fa99d7"
+    },
+    {
+      "sequence": 13,
+      "timestamp": "2026-09-18T02:24:16.089Z",
+      "type": "OPERATION_AUTHORIZATION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "operation": {
+          "changes_decision": false,
+          "description": "Run the fixture acceptance test",
+          "domain": "test_implementation",
+          "id": "run-fixture-tests",
+          "paths": [
+            "src",
+            "tests"
+          ]
+        },
+        "result": {
+          "allowed": true,
+          "reason": "Within delegation, permissions and declared Decision boundary"
+        }
+      },
+      "previous_hash": "22093fdef564db77a30eea086f8601424e87786e4abac992de7d83af25fa99d7",
+      "hash": "0793de773ba1bc346d6eca5cf33a287bcc804b998e8b103e78f071a279d3fe94"
+    },
+    {
+      "sequence": 14,
+      "timestamp": "2026-09-18T02:24:18.136Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "from": "IMPLEMENTING",
+        "to": "VERIFYING",
+        "report": {
+          "changed_files": [
+            "src/value.txt"
+          ],
+          "discovery_fingerprint": "732c8015fad46d859e64c58cb24a628718355682e68a4ba38c1a4affbdf85969",
+          "evidence": [
+            "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+            "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+          ],
+          "id": "implementation-proposal-1",
+          "risk": "low",
+          "specification_id": "spec-1",
+          "summary": "Read-only proposal: replace only src/value.txt with exact UTF-8 content `ready` followed by one newline. No files were edited.",
+          "triggers": [
+            "apply-agent-change"
+          ],
+          "unexpected_deviations": [
+            "PowerShell shell reads failed in the sandbox with CreateProcessWithLogonW failed: 2; repository files were inspected through a read-only filesystem read instead.",
+            "git status --short could not be independently confirmed because Git reported dubious ownership; supplied CCCP discovery reported working_tree_status clean."
+          ]
+        }
+      },
+      "previous_hash": "0793de773ba1bc346d6eca5cf33a287bcc804b998e8b103e78f071a279d3fe94",
+      "hash": "471b0784883f95651719bb0fa46bcfd2fc924617a3de626a7491338712b7854f"
+    },
+    {
+      "sequence": 15,
+      "timestamp": "2026-09-18T02:24:19.830Z",
+      "type": "REVIEW_JUDGMENT",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "review": {
+          "id": "verified-r1",
+          "report_id": "implementation-proposal-1",
+          "review_level": "R1",
+          "reviewer": {
+            "id": "local-codex",
+            "role": "codex"
+          },
+          "decision": "APPROVE",
+          "confidence": 1,
+          "findings": [],
+          "evidence": [
+            "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+            "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+          ],
+          "failed_requirements": [],
+          "requirements": [],
+          "implementation_status": "pass",
+          "specification_compliance": "pass",
+          "architecture_compliance": "pass",
+          "boundary_violation": false,
+          "reason": "Host verified the recorded real diff and test artifacts."
+        },
+        "assessment": {
+          "outcome": "APPROVE",
+          "reason": "Host verified the recorded real diff and test artifacts."
+        }
+      },
+      "previous_hash": "471b0784883f95651719bb0fa46bcfd2fc924617a3de626a7491338712b7854f",
+      "hash": "0254198315c5ff4131a900815214896b6e22c0200c646459759275acea1891c0"
+    },
+    {
+      "sequence": 16,
+      "timestamp": "2026-09-18T02:24:19.830Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "from": "VERIFYING",
+        "to": "SPEC_REVIEW"
+      },
+      "previous_hash": "0254198315c5ff4131a900815214896b6e22c0200c646459759275acea1891c0",
+      "hash": "90d80a00c1f61e165b07f44984242ddeb80181476225cff5e8493b7522bbc32a"
+    },
+    {
+      "sequence": 17,
+      "timestamp": "2026-09-18T02:24:19.994Z",
+      "type": "REVIEW_JUDGMENT",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "review": {
+          "id": "verified-r2",
+          "report_id": "implementation-proposal-1",
+          "review_level": "R2",
+          "reviewer": {
+            "id": "local-codex",
+            "role": "codex"
+          },
+          "decision": "APPROVE",
+          "confidence": 1,
+          "findings": [],
+          "evidence": [
+            "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+            "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+          ],
+          "failed_requirements": [],
+          "requirements": [
+            {
+              "requirement_id": "OBJ-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "S-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "C-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "NG-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "AC-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "INV-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "EB-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "V-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            }
+          ],
+          "implementation_status": "pass",
+          "specification_compliance": "pass",
+          "architecture_compliance": "pass",
+          "boundary_violation": false,
+          "reason": "Host verified the recorded real diff and test artifacts."
+        },
+        "assessment": {
+          "outcome": "APPROVE",
+          "reason": "Host verified the recorded real diff and test artifacts."
+        }
+      },
+      "previous_hash": "90d80a00c1f61e165b07f44984242ddeb80181476225cff5e8493b7522bbc32a",
+      "hash": "6f2eab5f710000e92167da6775085372a455375632f24b3f68adf4b347aa7412"
+    },
+    {
+      "sequence": 18,
+      "timestamp": "2026-09-18T02:24:19.994Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "from": "SPEC_REVIEW",
+        "to": "REVIEW_ROUTING"
+      },
+      "previous_hash": "6f2eab5f710000e92167da6775085372a455375632f24b3f68adf4b347aa7412",
+      "hash": "620bb32ba89822cfb51884b5e62311e36a880dc64cc848b573f73a98acf3ecdd"
+    },
+    {
+      "sequence": 19,
+      "timestamp": "2026-09-18T02:24:20.154Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "from": "REVIEW_ROUTING",
+        "to": "ARCHITECTURE_REVIEW",
+        "routing": {
+          "required": true,
+          "reasons": [
+            "significant_plan_deviation",
+            "profile_requires_review",
+            "human_acceptance_requires_r3"
+          ],
+          "observed_triggers": [
+            "apply-agent-change",
+            "significant_plan_deviation"
+          ]
+        }
+      },
+      "previous_hash": "620bb32ba89822cfb51884b5e62311e36a880dc64cc848b573f73a98acf3ecdd",
+      "hash": "14683842952124b3b548cece5611dbe794c2fbeb1e0bd5c682bfc03fb9ba2ce1"
+    },
+    {
+      "sequence": 20,
+      "timestamp": "2026-09-18T02:25:08.070Z",
+      "type": "REVIEW_JUDGMENT",
+      "actor": {
+        "id": "independent-chatgpt",
+        "role": "chatgpt"
+      },
+      "data": {
+        "review": {
+          "id": "verified-r3",
+          "report_id": "implementation-proposal-1",
+          "review_level": "R3",
+          "reviewer": {
+            "id": "independent-chatgpt",
+            "role": "chatgpt"
+          },
+          "decision": "APPROVE",
+          "confidence": 1,
+          "findings": [],
+          "evidence": [
+            "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+            "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+          ],
+          "failed_requirements": [],
+          "requirements": [
+            {
+              "requirement_id": "OBJ-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "S-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "C-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "NG-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "AC-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "INV-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "EB-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            },
+            {
+              "requirement_id": "V-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:40dabec7-d90c-4760-858a-ecf21f1cdf2f:36dbce2adc9df39086ff9af3d76cb9b24458a48e5901d7738e58c0a330e2a586",
+                "evidence:fa7b1090-a03e-4349-a457-6e590a8b6a9e:ce0e4fb382c98ff53c96a7f544e1c3235b35df28c26cd9521294b021fb4382df"
+              ]
+            }
+          ],
+          "implementation_status": "pass",
+          "specification_compliance": "pass",
+          "architecture_compliance": "pass",
+          "boundary_violation": false,
+          "reason": "Frozen artifacts support the implementation and verification for the requested review level.",
+          "failure_signature": "/"
+        },
+        "assessment": {
+          "outcome": "APPROVE",
+          "reason": "Frozen artifacts support the implementation and verification for the requested review level."
+        }
+      },
+      "previous_hash": "14683842952124b3b548cece5611dbe794c2fbeb1e0bd5c682bfc03fb9ba2ce1",
+      "hash": "88666d2fdcb198912ba702b756359dc9443bba93eb79d198fec81a5308035af4"
+    },
+    {
+      "sequence": 21,
+      "timestamp": "2026-09-18T02:25:08.070Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "from": "ARCHITECTURE_REVIEW",
+        "to": "HUMAN_ACCEPTANCE"
+      },
+      "previous_hash": "88666d2fdcb198912ba702b756359dc9443bba93eb79d198fec81a5308035af4",
+      "hash": "147818cb42bff05e5e5ac5248353b8397da536537dc5df111f02485c6e68942d"
+    }
+  ]
+}

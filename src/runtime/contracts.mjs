@@ -46,10 +46,28 @@ export function validatePort(name, port) {
   requireRuntime(PORT_METHODS[name]?.every(method => typeof port?.[method] === 'function'), 'INVALID_PROVIDER', `Incomplete ${name} provider`);
 }
 export function validateCapabilities(value) {
-  record(value, 'provider capabilities', ['simulation', 'cancellation', 'durable', 'recovery', 'backend', 'sandbox', 'cross_process']);
+  record(value, 'provider capabilities', ['simulation', 'cancellation', 'durable', 'recovery', 'backend', 'sandbox', 'cross_process', 'independent_review', 'provider_id', 'review_boundary']);
   requireRuntime(typeof value.simulation === 'boolean', 'INVALID_RUNTIME_CONTRACT', 'simulation must be explicit');
-  if (!value.simulation) requireRuntime(['sqlite', 'docker', 'git-worktree'].includes(value.backend), 'UNSUPPORTED_CAPABILITY', 'Unsupported real provider backend');
-  for (const field of ['cancellation', 'durable', 'recovery', 'cross_process']) if (field in value) requireRuntime(typeof value[field] === 'boolean', 'INVALID_RUNTIME_CONTRACT', `${field} must be boolean`);
+  if (!value.simulation) requireRuntime(['sqlite', 'docker', 'git-worktree', 'codex-app-server', 'openai-responses', 'routed-agent'].includes(value.backend), 'UNSUPPORTED_CAPABILITY', 'Unsupported real provider backend');
+  for (const field of ['cancellation', 'durable', 'recovery', 'cross_process', 'independent_review']) if (field in value) requireRuntime(typeof value[field] === 'boolean', 'INVALID_RUNTIME_CONTRACT', `${field} must be boolean`);
+  if ('provider_id' in value) nonempty(value.provider_id, 'provider_id');
+  if ('review_boundary' in value) oneOf(value.review_boundary, ['independent-run'], 'review_boundary');
+  return jsonCopy(value);
+}
+
+export function validateFileChanges(value) {
+  requireRuntime(Array.isArray(value), 'INVALID_RUNTIME_CONTRACT', 'file_changes must be an array');
+  requireRuntime(value.length > 0 && value.length <= 100, 'INVALID_RUNTIME_CONTRACT', 'file_changes must contain 1..100 entries');
+  let bytes = 0;
+  const paths = new Set();
+  for (const change of value) {
+    record(change, 'file change', ['path', 'content']); nonempty(change.path, 'file change path');
+    requireRuntime(typeof change.content === 'string' && !change.path.includes('\\') && !change.path.startsWith('/') && !/^[A-Za-z]:/.test(change.path)
+      && !change.path.split('/').some(part => !part || part === '.' || part === '..'), 'INVALID_RUNTIME_CONTRACT', 'File change must use a normalized relative path');
+    requireRuntime(!paths.has(change.path), 'INVALID_RUNTIME_CONTRACT', 'Duplicate file change path');
+    paths.add(change.path); bytes += Buffer.byteLength(change.content, 'utf8');
+  }
+  requireRuntime(bytes <= 1024 * 1024, 'INVALID_RUNTIME_CONTRACT', 'Agent file changes exceed 1 MiB');
   return jsonCopy(value);
 }
 export function validateContext(value) {

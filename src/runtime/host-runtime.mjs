@@ -1,11 +1,11 @@
 import { AuditLog, canonical, digest } from '../audit.mjs';
 import { check } from '../contracts.mjs';
-import { requireRole } from '../authority.mjs';
+import { pathWithin, requireRole } from '../authority.mjs';
 import { CodexAdapter } from '../adapter.mjs';
 import { discover } from '../repository.mjs';
 import { capabilityManifest } from './capability-manifest.mjs';
 import { resolveRuntimeContext, checkTaskContext } from './runtime-context.mjs';
-import { jsonCopy, nonempty, oneOf, record, validateRequest, validateToolResult } from './contracts.mjs';
+import { jsonCopy, nonempty, oneOf, record, validateFileChanges, validateRequest, validateToolResult } from './contracts.mjs';
 import { canonicalRepository } from './workspace/workspace-manager.mjs';
 import { requireRuntime, RuntimeError, unsupported } from './errors.mjs';
 import { controllerJournal } from './controller-journal.mjs';
@@ -157,7 +157,8 @@ export class HostRuntime {
     requireRuntime(!this.#tasks.has(context.task_id) && !this.#starting.has(context.task_id), 'TASK_EXISTS', 'Recovery requires a new Host instance without this live task');
     this.#starting.add(context.task_id);
     try {
-      const task = await recoverController({ state: this.#providers.state, workspace: this.#providers.workspace, tool: this.#providers.tool, taskId: context.task_id, context });
+      const task = await recoverController({ state: this.#providers.state, workspace: this.#providers.workspace, tool: this.#providers.tool,
+        agent: this.#providers.agent, taskId: context.task_id, context });
       this.#tasks.set(task.id, task);
       const pending = await this.#providers.state.pending(task.id);
       await this.#save(task, { settlements: pending.map(key => ({ key, result: { ok: false, code: 'DELIVERY_UNCERTAIN' } })) });
@@ -186,12 +187,12 @@ export class HostRuntime {
       this.#tasks.set(task.id, task);
       try { const stored = await this.#providers.state.create(task.id, this.#data(task)); task.revision = stored.store_revision; }
       catch (cause) { task.fault = true; throw new RuntimeError('RUNTIME_STATE_UNAVAILABLE', 'Task storage creation failed', { cause }); }
-      return { simulation: true };
+      return { simulation: this.#manifest.simulation };
     }, { create: true });
   }
   async inspectTask(request) {
     return this.#call('inspectTask', request, task => ({ specification: task.controller.specification, delegation: task.controller.delegation,
-      protocol_audit: task.controller.audit, operations: [...task.operations.values()], agent_runs: [...task.runs.values()], storage_available: !task.fault, simulation: true }), { readOnly: true });
+      protocol_audit: task.controller.audit, operations: [...task.operations.values()], agent_runs: [...task.runs.values()], storage_available: !task.fault, simulation: this.#manifest.simulation }), { readOnly: true });
   }
   async discoverTask(request) {
     return this.#call('discoverTask', request, async (task, context, payload) => {
@@ -261,19 +262,63 @@ export class HostRuntime {
         requireRuntime(['DISCOVERY', 'IMPLEMENTATION_PLANNED'].includes(state), 'INVALID_TRANSITION', 'Deliberation is candidate-only before implementation');
         output_schema = 'Proposal';
       }
-      const runRequest = jsonCopy({ ...payload, context, input_schema: 'RuntimeAgentInput', output_schema,
+      let agentInput = payload.input;
+      if (payload.kind === 'review' && this.#manifest.provider_capabilities.agent.simulation === false) {
+        const refs = payload.input.evidence_refs;
+        requireRuntime(Array.isArray(refs) && refs.length > 0, 'INVALID_EVIDENCE', 'Real review requires verified evidence references');
+        const artifacts = [];
+        for (const ref of refs) artifacts.push(await this.#providers.evidence.verify(ref, { task_id: task.id }));
+        requireRuntime(artifacts.every(artifact => artifact.simulation === false), 'INVALID_EVIDENCE', 'Real review cannot rely on simulated artifacts');
+        if (payload.review_level === 'R3') requireRuntime(artifacts.some(a => a.type === 'DIFF') && artifacts.some(a => a.type === 'TEST_RUN'),
+          'INVALID_EVIDENCE', 'Independent R3 requires real diff and test artifacts');
+        if (payload.review_level === 'R3') for (const artifact of artifacts.filter(item => item.type === 'DIFF')) {
+          let delta; try { delta = JSON.parse(artifact.content); } catch { delta = null; }
+          const attempt = task.operations.get(artifact.operation_id), source = attempt && task.runs.get(attempt.agent_run_id);
+          requireRuntime(delta?.format === 'cccp-file-delta-v1' && delta.source_run_id === attempt?.agent_run_id && source?.status === 'COMPLETED'
+            && delta.changes?.some(change => change.changed), 'INVALID_EVIDENCE', 'R3 DIFF must be an actual delta bound to a completed implementation run');
+        }
+        const latestSnapshot = [...task.operations.values()].map(operation => operation.result?.repository_after).filter(Boolean).at(-1)
+          ?? task.controller.snapshot.discovery;
+        agentInput = { decision: task.approval.decision, specification: task.controller.specification, report: task.controller.snapshot.report,
+          repository_snapshot: latestSnapshot, artifacts };
+      }
+      const agentSimulation = this.#manifest.provider_capabilities.agent.simulation;
+      const runRequest = jsonCopy({ ...payload, input: agentInput, context, input_schema: 'RuntimeAgentInput', output_schema,
         context_snapshot: task.controller.snapshot, repository_snapshot: task.controller.snapshot.discovery ?? { repository: task.workspace.repository_identity },
-        delegation: task.controller.delegation, allowed_tools: [], simulation: true });
-      task.runs.set(payload.run_id, jsonCopy({ run_id: payload.run_id, context, kind: payload.kind, status: 'RUNNING', simulation: true }));
+        delegation: task.controller.delegation, allowed_tools: payload.kind === 'implement' ? ['read_repository'] : [], simulation: agentSimulation });
+      task.runs.set(payload.run_id, jsonCopy({ run_id: payload.run_id, context, kind: payload.kind, review_level: payload.review_level ?? null,
+        provider: this.#manifest.provider_capabilities.agent.backend ?? 'fake', status: 'RUNNING', simulation: agentSimulation }));
       task.active = { provider: this.#providers.agent, id: payload.run_id };
       try {
         await this.#save(task); this.#unchanged(task, context);
-        const run = jsonCopy(await this.#providers.agent[payload.kind](runRequest));
-        requireRuntime(run.run_id === payload.run_id && canonical(run.context) === canonical(context) && run.simulation === true, 'INVALID_RUNTIME_CONTRACT', 'Agent result binding mismatch');
+        let pending;
+        if (typeof this.#providers.agent.dispatch === 'function') {
+          const onBinding = async binding => {
+            const current = task.runs.get(payload.run_id);
+            requireRuntime(current?.status === 'RUNNING', 'EXECUTION_INTERRUPTED', 'Agent binding arrived after run termination');
+            task.runs.set(payload.run_id, jsonCopy({ ...current, execution_binding: binding }));
+            await this.#save(task); this.#unchanged(task, context);
+          };
+          const dispatched = this.#providers.agent.dispatch(payload.kind, runRequest, { onBinding });
+          task.runs.set(payload.run_id, jsonCopy({ ...task.runs.get(payload.run_id), execution_binding: dispatched.binding }));
+          await this.#save(task); pending = dispatched.result;
+        } else pending = this.#providers.agent[payload.kind](runRequest);
+        const run = jsonCopy(await pending);
+        requireRuntime(run.run_id === payload.run_id && canonical(run.context) === canonical(context) && run.simulation === agentSimulation, 'INVALID_RUNTIME_CONTRACT', 'Agent result binding mismatch');
         task.runs.set(payload.run_id, run); this.#unchanged(task, context);
         requireRuntime(run.status === 'COMPLETED', 'EXECUTION_INTERRUPTED', 'Agent run did not complete');
         check(output_schema, run.output);
+        if (payload.kind === 'implement' && !agentSimulation) {
+          const changes = validateFileChanges(run.artifacts?.file_changes);
+          requireRuntime(changes.every(change => task.controller.delegation.paths.some(root => pathWithin(change.path, root))),
+            'AUTHORITY_BOUNDARY_EXCEEDED', 'Agent file changes exceed Delegation paths');
+        }
         if (payload.kind === 'review') requireRuntime(canonical(run.output.reviewer) === canonical(context.principal) && run.output.review_level === payload.review_level, 'AUTHORITY_BOUNDARY_EXCEEDED', 'Agent cannot impersonate another reviewer');
+        if (payload.kind === 'review' && !agentSimulation && run.output.decision === 'APPROVE') {
+          const allowed = new Set(agentInput.artifacts.map(a => a.artifact_ref));
+          const cited = [...run.output.evidence, ...run.output.requirements.flatMap(item => item.evidence)];
+          requireRuntime(cited.length > 0 && cited.every(ref => allowed.has(ref)), 'INVALID_EVIDENCE', 'Agent review cited evidence outside its frozen input');
+        }
         return run;
       } catch (error) {
         const run = task.runs.get(payload.run_id);
@@ -284,7 +329,7 @@ export class HostRuntime {
   }
   async executeTool(request) {
     return this.#call('executeTool', request, async (task, context, payload, input) => {
-      record(payload, 'Tool dispatch', ['operation_id', 'attempt_id']); nonempty(payload.operation_id, 'operation_id'); nonempty(payload.attempt_id, 'attempt_id');
+      record(payload, 'Tool dispatch', ['operation_id', 'attempt_id', 'agent_run_id']); nonempty(payload.operation_id, 'operation_id'); nonempty(payload.attempt_id, 'attempt_id');
       nonempty(input.idempotency_key, 'idempotency_key');
       requireRuntime(!task.operations.has(payload.attempt_id), 'ATTEMPT_ALREADY_EXISTS', 'Attempt cannot be reused');
       task.lease = await this.#providers.workspace.renewLease(task.lease.lease_id); this.#unchanged(task, context);
@@ -299,8 +344,18 @@ export class HostRuntime {
         try {
           // Commit the attempted-operation identity before the external side effect.
           await this.#save(task); this.#unchanged(task, context);
+          let agent_input;
+          if (payload.agent_run_id) {
+            const source = task.runs.get(payload.agent_run_id);
+            requireRuntime(source?.status === 'COMPLETED' && source.kind === 'implement' && source.context.principal.id === context.principal.id,
+              'INVALID_RUNTIME_CONTRACT', 'Tool input must come from the active implementer run');
+            agent_input = { file_changes: validateFileChanges(source.artifacts?.file_changes), source_run_id: source.run_id };
+            requireRuntime(agent_input.file_changes.every(change => operation.paths.some(root => pathWithin(change.path, root))),
+              'AUTHORITY_BOUNDARY_EXCEEDED', 'Agent file changes exceed the approved Operation paths');
+          }
           result = validateToolResult(await this.#providers.tool.run({ context, attempt_id: payload.attempt_id, operation,
             delegation: task.controller.delegation, workspace: task.workspace, repository_snapshot: task.controller.snapshot.discovery,
+            ...(agent_input ? { agent_input } : {}),
             policy: { cwd: task.workspace.repository_identity, filesystem_allowlist: operation.paths, environment_allowlist: [], network: 'deny',
               tool_allowlist: [operation.id], timeout_ms: 30000, output_limit_bytes: 1048576, resources: { cpu_ms: 30000, memory_bytes: 268435456, file_size_bytes: 1048576 }, enforced: this.#manifest.capabilities.os_sandbox },
             simulation: this.#manifest.provider_capabilities.tool.simulation }), { allowReal: !this.#manifest.provider_capabilities.tool.simulation });
@@ -310,11 +365,15 @@ export class HostRuntime {
             task.controller.block(context.principal, 'REPOSITORY_FAILURE', `Tool outcome ${result.outcome}; rediscover before any further execution`, [payload.attempt_id]);
             throw new RuntimeError(result.outcome, 'Tool did not succeed; no automatic retry');
           }
-          const evidence_ref = await this.#providers.evidence.put({ type: 'COMMAND_RUN', task_id: task.id, operation_id: payload.attempt_id,
-            repository_snapshot: task.controller.snapshot.discovery, producer: result.simulation ? 'fake-tool-runner' : 'process-tool-runner', principal: context.principal,
-            status: 'pass', content: JSON.stringify(result), simulation: result.simulation });
+          const type = payload.agent_run_id ? 'DIFF' : operation.domain === 'test_implementation' ? 'TEST_RUN' : 'COMMAND_RUN';
+          const repository_snapshot = result.repository_after ?? task.controller.snapshot.discovery;
+          requireRuntime(type !== 'DIFF' || result.file_delta?.source_run_id === payload.agent_run_id, 'INVALID_EVIDENCE', 'DIFF requires an applied file delta');
+          const evidence_ref = await this.#providers.evidence.put({ type, task_id: task.id, operation_id: payload.attempt_id,
+            repository_snapshot, producer: result.simulation ? 'fake-tool-runner' : 'process-tool-runner', principal: context.principal,
+            status: 'pass', content: JSON.stringify(type === 'DIFF' ? result.file_delta : result), simulation: result.simulation });
           this.#unchanged(task, context);
-          task.operations.set(payload.attempt_id, jsonCopy({ ...attempt, phase: 'FINISHED', outcome: result.outcome, result, evidence_ref }));
+          task.operations.set(payload.attempt_id, jsonCopy({ ...attempt, phase: 'FINISHED', outcome: result.outcome, result, evidence_ref, evidence_refs: [evidence_ref],
+            ...(payload.agent_run_id ? { agent_run_id: payload.agent_run_id } : {}) }));
           return { ...result, evidence_ref };
         } catch (error) {
           if (!result) task.operations.set(payload.attempt_id, jsonCopy({ ...attempt, phase: 'FINISHED', outcome: 'EFFECT_UNKNOWN', error_code: error.code ?? 'TOOL_FAILED' }));
@@ -332,8 +391,9 @@ export class HostRuntime {
       for (const ref of payload.evidence_refs) {
         const artifact = await this.#providers.evidence.verify(ref, { task_id: task.id }); this.#unchanged(task, context);
         const attempt = task.operations.get(artifact.operation_id);
-        requireRuntime(attempt?.cycle === cycle(task) && attempt.evidence_ref?.artifact_ref === artifact.artifact_ref
-          && artifact.repository_snapshot.fingerprint === task.controller.snapshot.discovery?.fingerprint,
+        const snapshots = [task.controller.snapshot.discovery?.fingerprint, attempt?.result?.repository_before?.fingerprint, attempt?.result?.repository_after?.fingerprint];
+        requireRuntime(attempt?.cycle === cycle(task) && (attempt.evidence_refs ?? [attempt.evidence_ref]).some(item => item?.artifact_ref === artifact.artifact_ref)
+          && snapshots.includes(artifact.repository_snapshot.fingerprint),
         'INVALID_EVIDENCE', 'Evidence must come from a recorded operation in this execution cycle and Discovery');
         if (payload.review.decision === 'APPROVE') requireRuntime(artifact.status === 'pass', 'INVALID_EVIDENCE', 'Unknown/failed evidence cannot support APPROVE');
         validated.add(artifact.artifact_ref);
@@ -341,6 +401,16 @@ export class HostRuntime {
       if (payload.review.decision === 'APPROVE') {
         const references = [...payload.review.evidence, ...payload.review.requirements.flatMap(r => r.evidence)];
         requireRuntime(validated.size > 0 && references.length > 0 && references.every(ref => validated.has(ref)), 'INVALID_EVIDENCE', 'Review evidence must refer to verified artifacts');
+      }
+      if (payload.review.review_level === 'R3' && this.#manifest.capabilities.independent_r3) {
+        const source = [...task.runs.values()].find(run => run.kind === 'review' && run.review_level === 'R3' && run.status === 'COMPLETED'
+          && run.context.principal.id === context.principal.id && canonical(run.output) === canonical(payload.review));
+        const implementation = [...task.runs.values()].find(run => run.kind === 'implement' && run.status === 'COMPLETED' && run.context.principal.id === task.implementer);
+        requireRuntime(source && implementation && source.context.principal.id !== task.implementer && source.provider_kind === 'chatgpt-reviewer'
+          && source.provider_instance !== implementation.provider_instance && source.run_id !== implementation.run_id
+          && source.execution_binding?.thread_id !== implementation.execution_binding?.thread_id,
+        'AUTHORITY_BOUNDARY_EXCEEDED',
+          'R3 must be the unchanged output of an independent real review run');
       }
       task.controller.applyReview(context.principal, payload.review);
     });

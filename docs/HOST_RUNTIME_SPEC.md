@@ -1,22 +1,24 @@
 # Host Runtime Specification
 
-M3 增加 ProcessToolRunner、GitWorkspaceManager、持久仓库租约及真实尝试恢复绑定，详见 [TOOL_RUNNER_SPEC.md](TOOL_RUNNER_SPEC.md)。当前代码待真实 Docker 验收，不能把默认跳过的容器测试视为通过。真实 Agent 与独立 R3 保持关闭。
+M4 增加真实 Codex AgentProvider、独立 ChatGPT/OpenAI Review provider、真实 Artifact 绑定及正常/恢复 E2E，详见 [AGENT_PROVIDER_SPEC.md](AGENT_PROVIDER_SPEC.md) 与 [ADR 0004](adr/0004-real-agents-independent-review.md)。真实装配按 provider 能力暴露 `real_agents` 与 `independent_r3`；fake 装配保持关闭。Protocol 仍为 CCCP 1.0。
 
-M2 扩展已实现，见 [PERSISTENCE_SPEC.md](PERSISTENCE_SPEC.md) 和 [ADR 0002](adr/0002-durable-runtime.md)。下文 M1 能力限制与 RT-01～RT-10 保留为历史基线；装配 SQLite State/Evidence/Identity providers 时，Runtime contract 为 0.2、storage schema 为 sqlite-1，支持受验证的 recoverTask。内存装配仍明确拒绝 crash_recovery。生产 Agent 与独立 R3 未实现。
+M3 的 ProcessToolRunner、GitWorkspaceManager、持久仓库租约和真实 Docker 验收已经完成，详见 [TOOL_RUNNER_SPEC.md](TOOL_RUNNER_SPEC.md)。
 
-状态：Human 批准范围内的实现规范。对应 CCCP Protocol 1.0；Runtime contract 0.1；Runtime implementation 0.2.0-dev。包版本仍为 0.1.1。
+M2 扩展已实现，见 [PERSISTENCE_SPEC.md](PERSISTENCE_SPEC.md) 和 [ADR 0002](adr/0002-durable-runtime.md)。下文 M1 能力限制与 RT-01～RT-10 保留为历史基线；装配 SQLite State/Evidence/Identity providers 时，Runtime contract 为 0.2、storage schema 为 sqlite-1，支持受验证的 recoverTask。内存装配仍明确拒绝 crash_recovery。真实 Agent 与独立 R3 Provider 的 M4 接线已实现；本轮源码和审计材料的最终独立 R3 审查另行进行，见 [M4 R3 交接](M4_R3_HANDOFF.md)。
+
+状态：Human 批准范围内的实现规范。对应 CCCP Protocol 1.0；Runtime contract 0.2；Runtime implementation 0.2.0-dev。包版本仍为 0.1.1。
 
 ## 1. 范围与信任边界
 
 HostRuntime 是可信的进程内宿主，持有活跃 Controller，装配六端口。所有端口、会话配置、fake 脚本及 Discovery 注入均由宿主提供，不能来自模型消息。请求、Agent 输出、仓库内容与工具输出不可信。运行于同一 JavaScript 进程的恶意宿主代码不在隔离保证内。
 
-M1 支持内存记录、fake Agent / ToolRunner、注册式 workspace、内存证据和模拟 workflow。不实现 SQLite、恢复重放、Inbox/Outbox、真实 SDK/MCP 接线、shell runner、worktree 创建或 OS sandbox。Bridge 保持原有进程内边界，本期不替换其会话与去重实现。
+M1 历史基线支持内存记录、fake Agent / ToolRunner、注册式 workspace、内存证据和模拟 workflow。M2 至 M4 已在此基础上加入 SQLite 恢复、Docker ToolRunner、Git worktree、真实 Agent 与独立 R3；Bridge 的协议职责不变。
 
 ## 2. 版本与 capability manifest
 
 `HostRuntime.create(options)` 检查六端口所需方法及能力后构造宿主。manifest 含 protocol_versions、runtime_version、contract_version、storage_schema_version、simulation、capabilities 和 provider_capabilities。
 
-M1 的 simulation 必须为 true。durable_state、crash_recovery、real_agents、os_sandbox、independent_r3、cross_process_leases 均为 false。simulated_cancellation 仅当 fake Agent 与 ToolRunner 均声明支持时为 true。未知或未满足的 requiredCapabilities 拒绝启动，不静默降级。内存 schema 版本不是数据库 migration 版本。
+内存/fake 装配的 simulation 必须为 true，`real_agents` 与 `independent_r3` 为 false。真实 routed Agent 只有在实施和审查后端均非模拟、审查后端显式声明独立能力时才开启对应 capability。未知或未满足的 requiredCapabilities 拒绝启动，不静默降级。内存 schema 版本不是数据库 migration 版本。
 
 ## 3. 请求与上下文
 
@@ -59,7 +61,7 @@ M1 的 simulation 必须为 true。durable_state、crash_recovery、real_agents�
 
 ## 5. 六端口 contract
 
-端口方法均可异步；capabilities 返回 `{ simulation: true, cancellation?: boolean }`。M1 宿主只接受明确的模拟端口，避免把假的执行能力声明成生产能力。
+端口方法均可异步；capabilities 必须显式返回 `simulation`，并可声明 cancellation、recovery、backend 与端口特有能力。fake 端口保持 `simulation: true`；真实端口必须使用 Runtime 支持并验证的 backend，避免把模拟执行声明成生产能力。
 
 | 端口 | 方法 | M1 实现 |
 |---|---|---|

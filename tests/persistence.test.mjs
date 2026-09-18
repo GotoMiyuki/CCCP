@@ -126,3 +126,26 @@ test('synthetic provider fault requires reconciliation even after FINISHED; a fa
   assert.equal((await sim.call('inspectTask', 'human')).result.operations[0].reconciliation.stopped, true);
   await sim.host.close(); await assert.rejects(sim.call('inspectTask', 'human'), raises('RUNTIME_CLOSED')); sim.database.close();
 });
+
+test('unfinished real Agent run fails closed until the original execution is proven stopped', async t => {
+  const dir = await directory(); let sim = await durableFixture(dir);
+  await sim.host.close(); sim.database.close();
+  let database = await SqliteDatabase.open({ path: join(dir, 'runtime.sqlite') });
+  let state = new SqliteStateStore({ database }), stored = await state.read('durable-task');
+  const data = structuredClone(stored.data);
+  data.agent_runs.push({ run_id: 'orphan-agent', kind: 'implement', review_level: null, status: 'RUNNING', simulation: false,
+    context: { task_id: 'durable-task', principal: codex, state_version: data.snapshot.state_version, delegation_ref: data.approval.delegation.id,
+      workspace_ref: 'durable-workspace', correlation_id: 'orphan' }, execution_binding: { backend: 'codex-app-server', pid: 424242, run_id: 'orphan-agent' } });
+  await state.compareAndSwap('durable-task', stored.store_revision, data); database.close();
+  const provider = stopped => ({
+    capabilities: async () => ({ simulation: false, backend: 'codex-app-server', cancellation: true, recovery: true, provider_id: 'recovery-agent' }),
+    deliberate: async () => {}, implement: async () => {}, review: async () => {}, cancel: async () => false, inspect: async () => null,
+    reconcile: async run => ({ stopped, reason: stopped ? 'process_absent' : `unverified_${run.execution_binding.pid}` }),
+  });
+  sim = await durableFixture(dir, { start: false, agent: provider(false) });
+  await assert.rejects(sim.call('recoverTask', 'human'), raises('RECONCILIATION_REQUIRED')); sim.database.close();
+  sim = await durableFixture(dir, { start: false, agent: provider(true) }); t.after(() => sim.database.close());
+  await sim.call('recoverTask', 'human');
+  const run = (await sim.call('inspectTask', 'human')).result.agent_runs.find(item => item.run_id === 'orphan-agent');
+  assert.equal(run.status, 'INTERRUPTED'); assert.equal(run.reconciliation.stopped, true);
+});

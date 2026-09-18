@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { SqliteDatabase, SqliteStateStore, SqliteEvidenceStore, SqliteIdentityProvider, MemoryWorkspaceManager, FakeToolRunner, FakeAgentProvider, HostRuntime, defaultProfile } from '../../src/index.mjs';
 import { approvalFixture, human, codex, chatgpt, discoveryFixture } from '../../examples/fixtures.mjs';
 
-export async function durableFixture(directory, { start = true, recover = false, tool, fault, taskId = 'durable-task', humanAcceptance = false, discovery = async path => discoveryFixture(path) } = {}) {
+export async function durableFixture(directory, { start = true, recover = false, tool, agent, fault, taskId = 'durable-task', humanAcceptance = false, discovery = async path => discoveryFixture(path) } = {}) {
   const repository = join(directory, 'repo');
   const database = await SqliteDatabase.open({ path: join(directory, 'runtime.sqlite') });
   if (fault) database.fault = fault;
@@ -11,7 +11,7 @@ export async function durableFixture(directory, { start = true, recover = false,
     identity: new SqliteIdentityProvider({ database, sessions: [human, codex, chatgpt].map(principal => ({ credential: `durable-${principal.role}`,
       principal, task_ids: [taskId], expires_at: 4102444800000 })) }),
     workspace: new MemoryWorkspaceManager({ workspaces: [{ workspace_ref: 'durable-workspace', repository }] }),
-    tool: tool ?? new FakeToolRunner({ scripts: { 'op-1': { stdout: 'Durable simulation' } } }), agent: new FakeAgentProvider(),
+    tool: tool ?? new FakeToolRunner({ scripts: { 'op-1': { stdout: 'Durable simulation' } } }), agent: agent ?? new FakeAgentProvider(),
   };
   const host = await HostRuntime.create({ providers, discovery });
   const configuredProfile = defaultProfile(repository);

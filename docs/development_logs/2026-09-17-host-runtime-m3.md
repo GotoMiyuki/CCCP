@@ -17,7 +17,7 @@
 
 Windows / Node v24.19.0 / Git 2.45.1.windows.1。
 
-`npm test`：**187 PASS / 0 FAIL / 0 skipped**，共 187 项；真实 Docker tests 已显式启用并全部通过。M2 基线 172 项保留，新增 15 项 M3 检查通过。原始输出保存在 `.cccp/reviews/m3-tests.txt`。
+显式设置 Docker 测试环境后的 `npm test`：**187 PASS / 0 FAIL / 0 skipped**，共 187 项；真实 Docker tests 已全部通过。M2 基线 172 项保留，新增 15 项 M3 检查通过。`.cccp/reviews/m3-tests.txt` 保留的是较早一次默认跳过容器测试的输出，不作为最终 Docker 验收原始证据。
 
 `npm run check`：9 个 schema/state artifacts 一致。冻结 Guide 与 9 个 artifacts 的原始字节哈希测试通过。原协议 workflow 和 Runtime simulation demo 均为模拟 DONE、audit_valid=true；不能视为本任务完成独立审查。
 
@@ -28,9 +28,9 @@ Windows / Node v24.19.0 / Git 2.45.1.windows.1。
 | path/junction/hardlink/.git | 临时实际文件和 junction/hardlink；清单包含 ignored 文件变化 | PASS（宿主预检） |
 | 宿主 Git 不运行仓库命令 | 安装会写 marker 的 hook/fsmonitor/filter，worktree/Discovery 后 marker 不存在 | PASS |
 | 接受和未知终态不丢失 | Human Acceptance 重开数据库仍为同一 DONE/audit；合成故障 provider 的未知终态无法被 fake replacement 隐藏 | PASS |
-| 容器挂载、环境、网络、资源 | 已编写显式真实 Docker 测试，当前未运行 | PENDING |
-| 超时、输出洪泛、detached 子进程 | 已编写，须真实引擎核实停止和副作用不再变化 | PENDING |
-| 真实 Artifact、Human Stop、Host SIGKILL orphan 恢复 | 已编写，须真实引擎验证；当前合成 provider 测试不替代它们 | PENDING |
+| 容器挂载、环境、网络、资源 | 固定 digest 镜像与 Linux Docker 显式测试 | PASS |
+| 超时、输出洪泛、detached 子进程 | 真实引擎核实停止、输出上限和副作用不再变化 | PASS |
+| 真实 Artifact、Human Stop、Host SIGKILL orphan 恢复 | 真实容器、Host 与持久数据库验证 | PASS |
 | 保持 CCCP 1.0 / 无真实 Agent | 冻结哈希、旧测试、manifest real_agents/independent_r3=false | PASS |
 
 因此本日志完成 M3 实施者 R1 与逐条 R2 证据整理；这不是独立 ChatGPT R3 结论。
@@ -47,7 +47,7 @@ Human 随后批准了具体修复方案。执行时重新确认没有 Docker 相
 
 恢复出厂设置完成后再次启动 Docker，Linux engine pipe 仍未出现；新 backend 同样在创建 socket 时失败。Human 授权后已核验 Docker Inc 有效签名的更新包，安装完成后版本为 4.91.0.239619。随后 Docker Desktop 恢复可用；`desktop-linux` 报告 Docker Engine 29.8.0、Linux/WSL2、seccomp、memory/swap/CPU/PID 限制均可用。固定镜像 `node@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81` 的 8 项真实验收全部通过，测试容器已清理。
 
-继续真实验收需要 Human 批准具体的 Docker 恢复操作，或由 Human 恢复可用引擎。后续操作必须重新核实进程和目录现状，不能复用旧 PID。审核材料见 `.cccp/reviews/docker-repair-plan.md`。
+Docker 恢复与最终验收已经完成；历史修复方案保存在 `.cccp/reviews/docker-repair-plan.md`。任何未来环境修复仍须重新核实进程和目录现状，不能复用旧 PID。
 
 ## 评审材料
 

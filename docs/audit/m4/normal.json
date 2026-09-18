@@ -1,0 +1,1194 @@
+{
+  "audit_format": "cccp-m4-e2e-v1",
+  "scenario": "normal",
+  "captured_at": "2026-09-18T02:40:04.760Z",
+  "task_id": "m4-real-task",
+  "state": "HUMAN_ACCEPTANCE",
+  "repository_snapshot": {
+    "repository": {
+      "path": "C:\\Users\\99662\\AppData\\Local\\Temp\\cccp-m4-real-lD9Ama\\workspaces\\33340241593de14037307e1c",
+      "branch": null,
+      "commit": "e7c3d58f38417e4eebabd0165789541543fddb0d"
+    },
+    "base_commit": "e7c3d58f38417e4eebabd0165789541543fddb0d",
+    "working_tree_status": "clean",
+    "changed_files": [],
+    "related_files": [
+      "src/value.txt",
+      "tests/verify.mjs"
+    ],
+    "architecture_observations": [],
+    "reusable_implementations": [],
+    "test_status": "unknown",
+    "test_evidence": [],
+    "context_conflicts": [],
+    "observed_at": "2026-09-18T02:37:59.619Z",
+    "fingerprint": "4cf17cd06155506f761b3c5e9b38d2df9b1af52e6731b3c1dd590e1ffebaced6"
+  },
+  "operation_count": 2,
+  "operations": [
+    {
+      "attempt_id": "apply-1",
+      "operation_id": "apply-agent-change",
+      "outcome": "SUCCEEDED",
+      "evidence_ref": {
+        "evidence_id": "7d1dc0c8-3397-45ee-afdd-76202bc9eeef",
+        "content_hash": "486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+        "artifact_ref": "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4"
+      },
+      "agent_run_id": "real-implementation"
+    },
+    {
+      "attempt_id": "test-1",
+      "operation_id": "run-fixture-tests",
+      "outcome": "SUCCEEDED",
+      "evidence_ref": {
+        "evidence_id": "58084551-5119-46d4-a0ed-e263ee6b358f",
+        "content_hash": "ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3",
+        "artifact_ref": "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+      },
+      "agent_run_id": null
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_ref": "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+      "content": "{\"format\":\"cccp-file-delta-v1\",\"source_run_id\":\"real-implementation\",\"changes\":[{\"path\":\"src/value.txt\",\"before_exists\":true,\"before_hash\":\"3e37195fe5c1a6876784bbefc13035b8dfea16bb0711f0f8285f03edafbe9597\",\"before_content_base64\":\"cGVuZGluZw0K\",\"after_exists\":true,\"after_hash\":\"ed1a545bb85e55816bbf9566b028b2a0bc456b88f49f6f266c0401048824194b\",\"after_content_base64\":\"cmVhZHkK\",\"changed\":true}]}",
+      "content_hash": "486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+      "created_at": "2026-09-18T02:39:15.883Z",
+      "evidence_id": "7d1dc0c8-3397-45ee-afdd-76202bc9eeef",
+      "operation_id": "apply-1",
+      "principal": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "producer": "process-tool-runner",
+      "repository_snapshot": {
+        "bytes": 6,
+        "entries": 2,
+        "fingerprint": "f34de95866c5cae44ac25ca53b1008f9ee0b663311d55fe267d927f21db7d40b"
+      },
+      "simulation": false,
+      "status": "pass",
+      "task_id": "m4-real-task",
+      "type": "DIFF"
+    },
+    {
+      "artifact_ref": "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3",
+      "content": "{\"outcome\":\"SUCCEEDED\",\"stdout\":\"fixture pass\\n\",\"stderr\":\"\",\"exit_code\":0,\"started_at\":\"2026-09-18T02:39:16.083Z\",\"finished_at\":\"2026-09-18T02:39:18.184Z\",\"repository_before\":{\"fingerprint\":\"8876b34c79f525af3ed1df753b421bf0c9b1682d35445e857cc03eb365a4ac4a\",\"entries\":4,\"bytes\":181},\"repository_after\":{\"fingerprint\":\"8876b34c79f525af3ed1df753b421bf0c9b1682d35445e857cc03eb365a4ac4a\",\"entries\":4,\"bytes\":181},\"interruption_reason\":null,\"error_code\":null,\"process_tree_stopped\":true,\"execution\":{\"backend\":\"docker\",\"identity\":\"96c6df03f8f7eb50fa40f90cbdf99d65b16d7dc2bbceb9dc34f10c3b39eb4a6d\",\"image\":\"node@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81\",\"paths\":[\"src\",\"tests\"],\"writable\":false,\"network\":\"none\",\"limits\":{\"timeout_ms\":30000,\"output_limit_bytes\":1048576,\"memory_bytes\":268435456,\"cpu_ms\":30000,\"file_size_bytes\":1048576}},\"simulation\":false}",
+      "content_hash": "ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3",
+      "created_at": "2026-09-18T02:39:18.184Z",
+      "evidence_id": "58084551-5119-46d4-a0ed-e263ee6b358f",
+      "operation_id": "test-1",
+      "principal": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "producer": "process-tool-runner",
+      "repository_snapshot": {
+        "bytes": 181,
+        "entries": 4,
+        "fingerprint": "8876b34c79f525af3ed1df753b421bf0c9b1682d35445e857cc03eb365a4ac4a"
+      },
+      "simulation": false,
+      "status": "pass",
+      "task_id": "m4-real-task",
+      "type": "TEST_RUN"
+    }
+  ],
+  "agent_runs": [
+    {
+      "run_id": "real-implementation",
+      "kind": "implement",
+      "review_level": null,
+      "status": "COMPLETED",
+      "provider": "openai-codex-app-server",
+      "provider_kind": "codex-implementer",
+      "provider_instance": "codex-implementer:f3a04152-b641-445a-988d-d562861c18df",
+      "model": "gpt-5.5",
+      "principal": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "execution_binding": {
+        "backend": "codex-app-server",
+        "pid": 45536,
+        "run_id": "real-implementation",
+        "thread_id": "01a0b260-c3d1-7643-b657-3eb6116ae0b3",
+        "turn_id": "01a0b260-d7ba-7371-b1a2-d3f34f472868"
+      },
+      "output": {
+        "id": "cccp-implement-readonly-decision-1",
+        "specification_id": "spec-1",
+        "discovery_fingerprint": "4cf17cd06155506f761b3c5e9b38d2df9b1af52e6731b3c1dd590e1ffebaced6",
+        "summary": "Prepared the bounded proposed change for src/value.txt so its exact UTF-8 content is ready followed by one newline. No files were edited.",
+        "changed_files": [
+          "src/value.txt"
+        ],
+        "evidence": [
+          "Read src/value.txt: current content is pending followed by CRLF bytes [112,101,110,100,105,110,103,13,10].",
+          "Read tests/verify.mjs: fixture asserts src/value.txt UTF-8 content equals ready followed by LF.",
+          "Did not modify files because the workspace is read-only and the task requested proposed complete file contents only."
+        ],
+        "unexpected_deviations": [
+          "PowerShell read attempts were unavailable in the sandbox, so repository inspection was completed through read-only Node filesystem reads.",
+          "Fixture test was not executed because CCCP allowed_tools only included read_repository."
+        ],
+        "risk": "low",
+        "triggers": [
+          "CCCP_INPUT.kind=implement",
+          "allowed_tools=read_repository",
+          "read_only_workspace"
+        ]
+      }
+    },
+    {
+      "run_id": "real-r3",
+      "kind": "review",
+      "review_level": "R3",
+      "status": "COMPLETED",
+      "provider": "openai-codex-app-server",
+      "provider_kind": "chatgpt-reviewer",
+      "provider_instance": "chatgpt-reviewer:da9e4302-c410-4698-85a7-7015e79b654e",
+      "model": "gpt-5.5",
+      "principal": {
+        "id": "independent-chatgpt",
+        "role": "chatgpt"
+      },
+      "execution_binding": {
+        "backend": "codex-app-server",
+        "pid": 48008,
+        "run_id": "real-r3",
+        "thread_id": "01a0b261-f484-7622-8bd8-7085ed329d8f",
+        "turn_id": "01a0b262-08cb-7920-ae3a-505449927451"
+      },
+      "output": {
+        "id": "verified-r3",
+        "report_id": "cccp-implement-readonly-decision-1",
+        "review_level": "R3",
+        "reviewer": {
+          "id": "independent-chatgpt",
+          "role": "chatgpt"
+        },
+        "decision": "APPROVE",
+        "confidence": 1,
+        "findings": [],
+        "evidence": [
+          "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+          "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+        ],
+        "failed_requirements": [],
+        "requirements": [
+          {
+            "requirement_id": "OBJ-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+              "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+            ]
+          },
+          {
+            "requirement_id": "S-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+              "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+            ]
+          },
+          {
+            "requirement_id": "C-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+              "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+            ]
+          },
+          {
+            "requirement_id": "NG-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+              "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+            ]
+          },
+          {
+            "requirement_id": "AC-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+              "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+            ]
+          },
+          {
+            "requirement_id": "INV-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+              "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+            ]
+          },
+          {
+            "requirement_id": "EB-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+              "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+            ]
+          },
+          {
+            "requirement_id": "V-1",
+            "status": "pass",
+            "evidence": [
+              "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+              "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+            ]
+          }
+        ],
+        "implementation_status": "pass",
+        "specification_compliance": "pass",
+        "architecture_compliance": "pass",
+        "boundary_violation": false,
+        "reason": "Approved from frozen CCCP_INPUT artifacts.",
+        "failure_signature": "None"
+      }
+    }
+  ],
+  "protocol_audit": [
+    {
+      "sequence": 1,
+      "timestamp": "2026-09-18T02:37:58.921Z",
+      "type": "PROFILE_APPROVED",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "id": "default",
+        "repository": "C:\\Users\\99662\\AppData\\Local\\Temp\\cccp-m4-real-lD9Ama\\workspaces\\33340241593de14037307e1c",
+        "default_branch": "main",
+        "delegation": {
+          "allowed": [
+            "internal_implementation",
+            "local_refactor",
+            "internal_structure",
+            "test_implementation",
+            "code_cleanup",
+            "specification_local_change",
+            "implementation_plan"
+          ],
+          "forbidden": [
+            "architecture_change",
+            "system_boundary_change",
+            "public_api_change",
+            "external_behavior_change",
+            "scope_expansion",
+            "new_dependency",
+            "data_model_change",
+            "protocol_contract_change",
+            "important_feature_removal",
+            "destructive_operation",
+            "release_workflow_change",
+            "push",
+            "force_push",
+            "remote_branch_change",
+            "remote_branch_delete"
+          ]
+        },
+        "permissions": {},
+        "verification_commands": [
+          [
+            "node",
+            "tests/verify.mjs"
+          ]
+        ],
+        "context_path": "docs/ai",
+        "review": {
+          "triggers": [
+            "architecture_sensitive",
+            "cross_module_responsibility",
+            "public_api_or_contract",
+            "near_delegation_boundary",
+            "significant_plan_deviation",
+            "uncertain_decision_compliance",
+            "reality_context_conflict",
+            "profile_requires_review"
+          ],
+          "require_r3": true,
+          "human_acceptance": true,
+          "max_revision_attempts": 2,
+          "repeated_failure_limit": 2
+        }
+      },
+      "previous_hash": null,
+      "hash": "2b0aa03ad63aecec33155cb5266f5bbc848c453e96d8bae26e19b8454953bcdf"
+    },
+    {
+      "sequence": 2,
+      "timestamp": "2026-09-18T02:37:58.921Z",
+      "type": "INTENT_CONFIRMED",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "id": "intent-1",
+        "objective": "Implement a bounded internal change"
+      },
+      "previous_hash": "2b0aa03ad63aecec33155cb5266f5bbc848c453e96d8bae26e19b8454953bcdf",
+      "hash": "6990ead1e640402b4e3c8feda130856899188a1bf824888995648ab83f29b1ca"
+    },
+    {
+      "sequence": 3,
+      "timestamp": "2026-09-18T02:37:58.921Z",
+      "type": "DECISION_TRANSITION",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "from": "INTENT",
+        "to": "APPROVED",
+        "decision": {
+          "id": "decision-1",
+          "intent_id": "intent-1",
+          "proposal_id": "proposal-1",
+          "goal": "Implement a bounded internal change",
+          "selected_approach": "Use the approved internal implementation",
+          "constraints": [
+            "Preserve public behavior"
+          ],
+          "non_goals": [
+            "No remote push"
+          ],
+          "important_trade_offs": [],
+          "rejected_alternatives": []
+        },
+        "approval": {
+          "actor": {
+            "id": "local-human",
+            "role": "human"
+          },
+          "timestamp": "2026-09-18T02:37:58.921Z",
+          "decision_id": "decision-1"
+        },
+        "mode": "Directed",
+        "note": "Human supplies the already chosen design; no AI deliberation is fabricated"
+      },
+      "previous_hash": "6990ead1e640402b4e3c8feda130856899188a1bf824888995648ab83f29b1ca",
+      "hash": "4fef06f4537f8fbaaa6acbacef32ec20a7c9ea381039fa789e8e868943a9f5e5"
+    },
+    {
+      "sequence": 4,
+      "timestamp": "2026-09-18T02:37:58.922Z",
+      "type": "DECISION_TRANSITION",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "from": "APPROVED",
+        "to": "SPECIFIED",
+        "specification": {
+          "id": "spec-1",
+          "decision_id": "decision-1",
+          "objective": {
+            "id": "OBJ-1",
+            "text": "Implement a bounded internal change"
+          },
+          "scope": [
+            {
+              "id": "S-1",
+              "text": "Internal files only"
+            }
+          ],
+          "constraints": [
+            {
+              "id": "C-1",
+              "text": "Preserve public behavior"
+            }
+          ],
+          "non_goals": [
+            {
+              "id": "NG-1",
+              "text": "No remote push"
+            }
+          ],
+          "acceptance_criteria": [
+            {
+              "id": "AC-1",
+              "text": "Expected internal result"
+            }
+          ],
+          "invariants": [
+            {
+              "id": "INV-1",
+              "text": "Human retains authority"
+            }
+          ],
+          "expected_behavior": [
+            {
+              "id": "EB-1",
+              "text": "Preserve public behavior"
+            }
+          ],
+          "verification_criteria": [
+            {
+              "id": "V-1",
+              "text": "Tests pass"
+            }
+          ]
+        }
+      },
+      "previous_hash": "4fef06f4537f8fbaaa6acbacef32ec20a7c9ea381039fa789e8e868943a9f5e5",
+      "hash": "63cd05ab89e3960cba55fcb46189e0d8b0051830d31dedc3c5c11192122ec0e0"
+    },
+    {
+      "sequence": 5,
+      "timestamp": "2026-09-18T02:37:58.922Z",
+      "type": "DECISION_TRANSITION",
+      "actor": {
+        "id": "local-human",
+        "role": "human"
+      },
+      "data": {
+        "from": "SPECIFIED",
+        "to": "DELEGATED",
+        "delegation": {
+          "id": "delegation-1",
+          "decision_id": "decision-1",
+          "allowed": [
+            "internal_implementation",
+            "test_implementation"
+          ],
+          "forbidden": [],
+          "paths": [
+            "src",
+            "tests"
+          ]
+        }
+      },
+      "previous_hash": "63cd05ab89e3960cba55fcb46189e0d8b0051830d31dedc3c5c11192122ec0e0",
+      "hash": "af2177b97e3298c222fcca8ce645a58953bd233a8152896e14b353de5e6e329b"
+    },
+    {
+      "sequence": 6,
+      "timestamp": "2026-09-18T02:37:58.922Z",
+      "type": "EXECUTION_CREATED",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "decision": {
+          "state": "DELEGATED",
+          "intent": {
+            "id": "intent-1",
+            "objective": "Implement a bounded internal change"
+          },
+          "proposal": null,
+          "decision": {
+            "id": "decision-1",
+            "intent_id": "intent-1",
+            "proposal_id": "proposal-1",
+            "goal": "Implement a bounded internal change",
+            "selected_approach": "Use the approved internal implementation",
+            "constraints": [
+              "Preserve public behavior"
+            ],
+            "non_goals": [
+              "No remote push"
+            ],
+            "important_trade_offs": [],
+            "rejected_alternatives": []
+          },
+          "specification": {
+            "id": "spec-1",
+            "decision_id": "decision-1",
+            "objective": {
+              "id": "OBJ-1",
+              "text": "Implement a bounded internal change"
+            },
+            "scope": [
+              {
+                "id": "S-1",
+                "text": "Internal files only"
+              }
+            ],
+            "constraints": [
+              {
+                "id": "C-1",
+                "text": "Preserve public behavior"
+              }
+            ],
+            "non_goals": [
+              {
+                "id": "NG-1",
+                "text": "No remote push"
+              }
+            ],
+            "acceptance_criteria": [
+              {
+                "id": "AC-1",
+                "text": "Expected internal result"
+              }
+            ],
+            "invariants": [
+              {
+                "id": "INV-1",
+                "text": "Human retains authority"
+              }
+            ],
+            "expected_behavior": [
+              {
+                "id": "EB-1",
+                "text": "Preserve public behavior"
+              }
+            ],
+            "verification_criteria": [
+              {
+                "id": "V-1",
+                "text": "Tests pass"
+              }
+            ]
+          },
+          "delegation": {
+            "id": "delegation-1",
+            "decision_id": "decision-1",
+            "allowed": [
+              "internal_implementation",
+              "test_implementation"
+            ],
+            "forbidden": [],
+            "paths": [
+              "src",
+              "tests"
+            ]
+          },
+          "profile": {
+            "id": "default",
+            "repository": "C:\\Users\\99662\\AppData\\Local\\Temp\\cccp-m4-real-lD9Ama\\workspaces\\33340241593de14037307e1c",
+            "default_branch": "main",
+            "delegation": {
+              "allowed": [
+                "internal_implementation",
+                "local_refactor",
+                "internal_structure",
+                "test_implementation",
+                "code_cleanup",
+                "specification_local_change",
+                "implementation_plan"
+              ],
+              "forbidden": [
+                "architecture_change",
+                "system_boundary_change",
+                "public_api_change",
+                "external_behavior_change",
+                "scope_expansion",
+                "new_dependency",
+                "data_model_change",
+                "protocol_contract_change",
+                "important_feature_removal",
+                "destructive_operation",
+                "release_workflow_change",
+                "push",
+                "force_push",
+                "remote_branch_change",
+                "remote_branch_delete"
+              ]
+            },
+            "permissions": {},
+            "verification_commands": [
+              [
+                "node",
+                "tests/verify.mjs"
+              ]
+            ],
+            "context_path": "docs/ai",
+            "review": {
+              "triggers": [
+                "architecture_sensitive",
+                "cross_module_responsibility",
+                "public_api_or_contract",
+                "near_delegation_boundary",
+                "significant_plan_deviation",
+                "uncertain_decision_compliance",
+                "reality_context_conflict",
+                "profile_requires_review"
+              ],
+              "require_r3": true,
+              "human_acceptance": true,
+              "max_revision_attempts": 2,
+              "repeated_failure_limit": 2
+            }
+          },
+          "approval": {
+            "actor": {
+              "id": "local-human",
+              "role": "human"
+            },
+            "timestamp": "2026-09-18T02:37:58.921Z",
+            "decision_id": "decision-1"
+          }
+        }
+      },
+      "previous_hash": "af2177b97e3298c222fcca8ce645a58953bd233a8152896e14b353de5e6e329b",
+      "hash": "acc555d49ef24b65e640e8efed1b529bdb898dffde905b2ebb09470f7692e408"
+    },
+    {
+      "sequence": 7,
+      "timestamp": "2026-09-18T02:37:59.620Z",
+      "type": "DISCOVERY_REPORT",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "repository": {
+          "path": "C:\\Users\\99662\\AppData\\Local\\Temp\\cccp-m4-real-lD9Ama\\workspaces\\33340241593de14037307e1c",
+          "branch": null,
+          "commit": "e7c3d58f38417e4eebabd0165789541543fddb0d"
+        },
+        "base_commit": "e7c3d58f38417e4eebabd0165789541543fddb0d",
+        "working_tree_status": "clean",
+        "changed_files": [],
+        "related_files": [
+          "src/value.txt",
+          "tests/verify.mjs"
+        ],
+        "architecture_observations": [],
+        "reusable_implementations": [],
+        "test_status": "unknown",
+        "test_evidence": [],
+        "context_conflicts": [],
+        "observed_at": "2026-09-18T02:37:59.619Z",
+        "fingerprint": "4cf17cd06155506f761b3c5e9b38d2df9b1af52e6731b3c1dd590e1ffebaced6"
+      },
+      "previous_hash": "acc555d49ef24b65e640e8efed1b529bdb898dffde905b2ebb09470f7692e408",
+      "hash": "160d6e03aef233567354dea5756c476e6efc3f070af78fa2a795b23e12546156"
+    },
+    {
+      "sequence": 8,
+      "timestamp": "2026-09-18T02:37:59.777Z",
+      "type": "OPERATION_AUTHORIZATION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "operation": {
+          "id": "apply-agent-change",
+          "domain": "internal_implementation",
+          "paths": [
+            "src"
+          ],
+          "changes_decision": false,
+          "description": "Apply the real Codex structured file change"
+        },
+        "result": {
+          "allowed": true,
+          "reason": "Within delegation, permissions and declared Decision boundary"
+        }
+      },
+      "previous_hash": "160d6e03aef233567354dea5756c476e6efc3f070af78fa2a795b23e12546156",
+      "hash": "1646c600129f36fc1c747c0188cf282f1a5e18d3f6e2ccb501dfaf8f18166a19"
+    },
+    {
+      "sequence": 9,
+      "timestamp": "2026-09-18T02:37:59.777Z",
+      "type": "OPERATION_AUTHORIZATION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "operation": {
+          "id": "run-fixture-tests",
+          "domain": "test_implementation",
+          "paths": [
+            "src",
+            "tests"
+          ],
+          "changes_decision": false,
+          "description": "Run the fixture acceptance test"
+        },
+        "result": {
+          "allowed": true,
+          "reason": "Within delegation, permissions and declared Decision boundary"
+        }
+      },
+      "previous_hash": "1646c600129f36fc1c747c0188cf282f1a5e18d3f6e2ccb501dfaf8f18166a19",
+      "hash": "c1c36799155039fc7e5b0994712fe1a2b41257cf4771d78f1066d6e701ba17a0"
+    },
+    {
+      "sequence": 10,
+      "timestamp": "2026-09-18T02:37:59.778Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "from": "DISCOVERY",
+        "to": "IMPLEMENTATION_PLANNED",
+        "plan": {
+          "summary": "Bounded fixture change",
+          "operations": [
+            {
+              "id": "apply-agent-change",
+              "domain": "internal_implementation",
+              "paths": [
+                "src"
+              ],
+              "changes_decision": false,
+              "description": "Apply the real Codex structured file change"
+            },
+            {
+              "id": "run-fixture-tests",
+              "domain": "test_implementation",
+              "paths": [
+                "src",
+                "tests"
+              ],
+              "changes_decision": false,
+              "description": "Run the fixture acceptance test"
+            }
+          ]
+        }
+      },
+      "previous_hash": "c1c36799155039fc7e5b0994712fe1a2b41257cf4771d78f1066d6e701ba17a0",
+      "hash": "8e11c31d381e5b4cee4be6e9bfe5912b4da567bdc59df18baa9bbe7993888fa8"
+    },
+    {
+      "sequence": 11,
+      "timestamp": "2026-09-18T02:38:00.245Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "from": "IMPLEMENTATION_PLANNED",
+        "to": "IMPLEMENTING",
+        "progress": null
+      },
+      "previous_hash": "8e11c31d381e5b4cee4be6e9bfe5912b4da567bdc59df18baa9bbe7993888fa8",
+      "hash": "a61a0aab791726cff0ef6e848ca2ddc9e353602500715ff7ce5010fd3c5e81e3"
+    },
+    {
+      "sequence": 12,
+      "timestamp": "2026-09-18T02:39:09.012Z",
+      "type": "OPERATION_AUTHORIZATION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "operation": {
+          "id": "apply-agent-change",
+          "domain": "internal_implementation",
+          "paths": [
+            "src"
+          ],
+          "changes_decision": false,
+          "description": "Apply the real Codex structured file change"
+        },
+        "result": {
+          "allowed": true,
+          "reason": "Within delegation, permissions and declared Decision boundary"
+        }
+      },
+      "previous_hash": "a61a0aab791726cff0ef6e848ca2ddc9e353602500715ff7ce5010fd3c5e81e3",
+      "hash": "d56d06b40a3bae18fb728f887aca83811ff80d39d4d7b738c797c0a8812c0b63"
+    },
+    {
+      "sequence": 13,
+      "timestamp": "2026-09-18T02:39:16.074Z",
+      "type": "OPERATION_AUTHORIZATION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "operation": {
+          "id": "run-fixture-tests",
+          "domain": "test_implementation",
+          "paths": [
+            "src",
+            "tests"
+          ],
+          "changes_decision": false,
+          "description": "Run the fixture acceptance test"
+        },
+        "result": {
+          "allowed": true,
+          "reason": "Within delegation, permissions and declared Decision boundary"
+        }
+      },
+      "previous_hash": "d56d06b40a3bae18fb728f887aca83811ff80d39d4d7b738c797c0a8812c0b63",
+      "hash": "1d73dcdf374a907fad9f871ab5865665c069175c9528946b815a6ddb9549101b"
+    },
+    {
+      "sequence": 14,
+      "timestamp": "2026-09-18T02:39:18.375Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "from": "IMPLEMENTING",
+        "to": "VERIFYING",
+        "report": {
+          "id": "cccp-implement-readonly-decision-1",
+          "specification_id": "spec-1",
+          "discovery_fingerprint": "4cf17cd06155506f761b3c5e9b38d2df9b1af52e6731b3c1dd590e1ffebaced6",
+          "summary": "Prepared the bounded proposed change for src/value.txt so its exact UTF-8 content is ready followed by one newline. No files were edited.",
+          "changed_files": [
+            "src/value.txt"
+          ],
+          "evidence": [
+            "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+            "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+          ],
+          "unexpected_deviations": [
+            "PowerShell read attempts were unavailable in the sandbox, so repository inspection was completed through read-only Node filesystem reads.",
+            "Fixture test was not executed because CCCP allowed_tools only included read_repository."
+          ],
+          "risk": "low",
+          "triggers": [
+            "CCCP_INPUT.kind=implement",
+            "allowed_tools=read_repository",
+            "read_only_workspace"
+          ]
+        }
+      },
+      "previous_hash": "1d73dcdf374a907fad9f871ab5865665c069175c9528946b815a6ddb9549101b",
+      "hash": "a3eef1a03cfb1e7d0c304e61831f5a341dae429ca38f9f26077449cc0ceb78a8"
+    },
+    {
+      "sequence": 15,
+      "timestamp": "2026-09-18T02:39:18.536Z",
+      "type": "REVIEW_JUDGMENT",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "review": {
+          "id": "verified-r1",
+          "report_id": "cccp-implement-readonly-decision-1",
+          "review_level": "R1",
+          "reviewer": {
+            "id": "local-codex",
+            "role": "codex"
+          },
+          "decision": "APPROVE",
+          "confidence": 1,
+          "findings": [],
+          "evidence": [
+            "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+            "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+          ],
+          "failed_requirements": [],
+          "requirements": [],
+          "implementation_status": "pass",
+          "specification_compliance": "pass",
+          "architecture_compliance": "pass",
+          "boundary_violation": false,
+          "reason": "Host verified the recorded real diff and test artifacts."
+        },
+        "assessment": {
+          "outcome": "APPROVE",
+          "reason": "Host verified the recorded real diff and test artifacts."
+        }
+      },
+      "previous_hash": "a3eef1a03cfb1e7d0c304e61831f5a341dae429ca38f9f26077449cc0ceb78a8",
+      "hash": "8f0c34d78076d1560ee25fcd32a995bba578b5ee62f489f18c99d5680d94a576"
+    },
+    {
+      "sequence": 16,
+      "timestamp": "2026-09-18T02:39:18.536Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "from": "VERIFYING",
+        "to": "SPEC_REVIEW"
+      },
+      "previous_hash": "8f0c34d78076d1560ee25fcd32a995bba578b5ee62f489f18c99d5680d94a576",
+      "hash": "fbef2df6457e1f693f171da486deb925d37315ef4e99877127fe359a75308ddb"
+    },
+    {
+      "sequence": 17,
+      "timestamp": "2026-09-18T02:39:18.702Z",
+      "type": "REVIEW_JUDGMENT",
+      "actor": {
+        "id": "local-codex",
+        "role": "codex"
+      },
+      "data": {
+        "review": {
+          "id": "verified-r2",
+          "report_id": "cccp-implement-readonly-decision-1",
+          "review_level": "R2",
+          "reviewer": {
+            "id": "local-codex",
+            "role": "codex"
+          },
+          "decision": "APPROVE",
+          "confidence": 1,
+          "findings": [],
+          "evidence": [
+            "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+            "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+          ],
+          "failed_requirements": [],
+          "requirements": [
+            {
+              "requirement_id": "OBJ-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "S-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "C-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "NG-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "AC-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "INV-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "EB-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "V-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            }
+          ],
+          "implementation_status": "pass",
+          "specification_compliance": "pass",
+          "architecture_compliance": "pass",
+          "boundary_violation": false,
+          "reason": "Host verified the recorded real diff and test artifacts."
+        },
+        "assessment": {
+          "outcome": "APPROVE",
+          "reason": "Host verified the recorded real diff and test artifacts."
+        }
+      },
+      "previous_hash": "fbef2df6457e1f693f171da486deb925d37315ef4e99877127fe359a75308ddb",
+      "hash": "955a9ef32fccbdbaf84d6f1aa826138c9dd8093288f5d440769b22baa96037ce"
+    },
+    {
+      "sequence": 18,
+      "timestamp": "2026-09-18T02:39:18.702Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "from": "SPEC_REVIEW",
+        "to": "REVIEW_ROUTING"
+      },
+      "previous_hash": "955a9ef32fccbdbaf84d6f1aa826138c9dd8093288f5d440769b22baa96037ce",
+      "hash": "5a76611cc191cbee2678b740fc1b2e4d0c103d69630bcdeb806ffbdb8f35c7b6"
+    },
+    {
+      "sequence": 19,
+      "timestamp": "2026-09-18T02:39:18.872Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "from": "REVIEW_ROUTING",
+        "to": "ARCHITECTURE_REVIEW",
+        "routing": {
+          "required": true,
+          "reasons": [
+            "significant_plan_deviation",
+            "profile_requires_review",
+            "human_acceptance_requires_r3"
+          ],
+          "observed_triggers": [
+            "CCCP_INPUT.kind=implement",
+            "allowed_tools=read_repository",
+            "read_only_workspace",
+            "significant_plan_deviation"
+          ]
+        }
+      },
+      "previous_hash": "5a76611cc191cbee2678b740fc1b2e4d0c103d69630bcdeb806ffbdb8f35c7b6",
+      "hash": "6b23b0ead0cd5ab7440b851749e6481ee93b56d3a66ec142a5d93be1b36f90b9"
+    },
+    {
+      "sequence": 20,
+      "timestamp": "2026-09-18T02:40:04.582Z",
+      "type": "REVIEW_JUDGMENT",
+      "actor": {
+        "id": "independent-chatgpt",
+        "role": "chatgpt"
+      },
+      "data": {
+        "review": {
+          "id": "verified-r3",
+          "report_id": "cccp-implement-readonly-decision-1",
+          "review_level": "R3",
+          "reviewer": {
+            "id": "independent-chatgpt",
+            "role": "chatgpt"
+          },
+          "decision": "APPROVE",
+          "confidence": 1,
+          "findings": [],
+          "evidence": [
+            "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+            "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+          ],
+          "failed_requirements": [],
+          "requirements": [
+            {
+              "requirement_id": "OBJ-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "S-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "C-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "NG-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "AC-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "INV-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "EB-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            },
+            {
+              "requirement_id": "V-1",
+              "status": "pass",
+              "evidence": [
+                "evidence:7d1dc0c8-3397-45ee-afdd-76202bc9eeef:486d0bed78b4a8e2803b64ec2abc5d8154eed479323dbbbf9e4125506398d1f4",
+                "evidence:58084551-5119-46d4-a0ed-e263ee6b358f:ac94a89bccd69014a01b792781d9e4de8b34ad88df9fef5c9b2683f9864ffdc3"
+              ]
+            }
+          ],
+          "implementation_status": "pass",
+          "specification_compliance": "pass",
+          "architecture_compliance": "pass",
+          "boundary_violation": false,
+          "reason": "Approved from frozen CCCP_INPUT artifacts.",
+          "failure_signature": "None"
+        },
+        "assessment": {
+          "outcome": "APPROVE",
+          "reason": "Approved from frozen CCCP_INPUT artifacts."
+        }
+      },
+      "previous_hash": "6b23b0ead0cd5ab7440b851749e6481ee93b56d3a66ec142a5d93be1b36f90b9",
+      "hash": "8ceef2ba79819ceb2c342054b0d4c324cdd8ad30ab0cfc67e9ebaea04885efaf"
+    },
+    {
+      "sequence": 21,
+      "timestamp": "2026-09-18T02:40:04.582Z",
+      "type": "EXECUTION_TRANSITION",
+      "actor": {
+        "id": "lifecycle-controller",
+        "role": "codex"
+      },
+      "data": {
+        "from": "ARCHITECTURE_REVIEW",
+        "to": "HUMAN_ACCEPTANCE"
+      },
+      "previous_hash": "8ceef2ba79819ceb2c342054b0d4c324cdd8ad30ab0cfc67e9ebaea04885efaf",
+      "hash": "cb980bf3a9952f59d1b007dee6c27cdb41aed0d3ad1a812aff207c17aa030de9"
+    }
+  ]
+}

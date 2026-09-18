@@ -11,10 +11,11 @@ export async function capabilityManifest(providers, requiredCapabilities = []) {
   }
   const pc = provider_capabilities;
   const durable = pc.state.durable === true;
+  const completeRealAgentRoute = pc.agent.simulation === false && pc.agent.backend === 'routed-agent';
   const capabilities = {
     durable_state: durable, crash_recovery: durable && pc.state.recovery === true && pc.identity.durable === true && pc.evidence.durable === true,
-    real_agents: false, os_sandbox: pc.tool.sandbox === 'docker' && pc.tool.simulation === false,
-    independent_r3: false, cross_process_leases: pc.workspace.cross_process === true,
+    real_agents: completeRealAgentRoute, os_sandbox: pc.tool.sandbox === 'docker' && pc.tool.simulation === false,
+    independent_r3: completeRealAgentRoute && pc.agent.independent_review === true, cross_process_leases: pc.workspace.cross_process === true,
     simulated_cancellation: pc.agent.cancellation === true && pc.tool.cancellation === true && pc.tool.simulation,
     tool_cancellation: pc.tool.cancellation === true,
   };
