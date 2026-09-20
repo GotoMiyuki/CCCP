@@ -24,8 +24,9 @@ export class ExecutionLifecycle {
   #reviews = {}; #revisionCount = 0; #failures = new Map(); #progress = new Set();
   #blockedFrom; #block; #proposal; #routing; #usedReports = new Set(); #appliedReviews = new Set();
   #revisionPending = false;
-  #blocks = new Map(); #humanStopped = false; #version = 0;
-  constructor({ decision, audit = new AuditLog() }) {
+  #blocks = new Map(); #humanStopped = false; #version = 0; #newId;
+  constructor({ decision, audit = new AuditLog(), idFactory = randomUUID }) {
+    this.#newId = idFactory;
     this.#approval = this.#approved(decision); this.#audit = audit;
     audit.append('EXECUTION_CREATED', controllerActor, { decision: this.#approval });
   }
@@ -47,12 +48,12 @@ export class ExecutionLifecycle {
   #move(state, actor, data = {}) { this.#audit.append('EXECUTION_TRANSITION', actor, { from: this.#state, to: state, ...data }); this.#state = state; this.#version++; }
   #blocked(actor, category, reason, evidence = []) {
     if (this.#state !== 'BLOCKED') this.#blockedFrom = this.#state;
-    this.#block = immutable({ id: randomUUID(), category, reason, evidence, required_resolution: 'Resolve the reported cause within existing authority, or obtain a new Human Decision / Delegation' });
+    this.#block = immutable({ id: this.#newId(), category, reason, evidence, required_resolution: 'Resolve the reported cause within existing authority, or obtain a new Human Decision / Delegation' });
     this.#blocks.set(category, this.#block);
     this.#move('BLOCKED', actor, { report: this.#block });
   }
   #change(actor, problem, evidence = []) {
-    this.#proposal = immutable({ id: randomUUID(), decision_id: this.#approval.decision.id, problem,
+    this.#proposal = immutable({ id: this.#newId(), decision_id: this.#approval.decision.id, problem,
       suggested_change: 'Human deliberation is required before choosing or authorizing a boundary-crossing change', trade_offs: [], affected_boundaries: ['Decision / Delegation'], evidence });
     this.#audit.append('CHANGE_PROPOSAL', actor, this.#proposal);
   }

@@ -1,6 +1,6 @@
 {
   "name": "cccp-reference",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "CCCP v1.0 protocol reference implementation",
@@ -9,6 +9,8 @@
     "test": "node --test",
     "check": "node scripts/export-schemas.mjs --check",
     "schemas": "node scripts/export-schemas.mjs",
-    "demo": "node examples/workflow.mjs"
+    "demo": "node examples/workflow.mjs",
+    "demo:runtime": "node examples/runtime-workflow.mjs",
+    "runtime": "node src/runtime/cli.mjs"
   }
 }
