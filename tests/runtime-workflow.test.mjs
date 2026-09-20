@@ -122,8 +122,12 @@ test('a pending Agent result cannot undo Human Stop, even if cancellation fails'
   const pending = sim.call('dispatchAgent', 'codex', { kind: 'implement', run_id: 'late', template_version: 'v1', input: {} });
   const interrupted = assert.rejects(pending, raises('EXECUTION_INTERRUPTED')); await waitForRun(sim.providers.agent, 'late');
   await sim.call('stopTask', 'human', { reason: 'Stop before Agent completes' }); await interrupted;
-  assert.equal((await sim.call('inspectTask', 'human')).snapshot.human_stopped, true);
+  let observed = await sim.call('inspectTask', 'human'); assert.equal(observed.snapshot.human_stopped, true);
+  assert.equal(observed.result.agent_runs.find(run => run.run_id === 'late').accepted, false);
   assert.ok(sim.host.audit.some(e => e.type === 'CANCELLATION_FAILED'));
+  await sim.call('resumeTask', 'human', { resolution: 'Human resumes without accepting the late Agent output' });
+  await assert.rejects(sim.call('executeTool', 'codex', { operation_id: 'op-1', attempt_id: 'late-output', agent_run_id: 'late' }, { key: 'late-output' }),
+    raises('INVALID_RUNTIME_CONTRACT'));
 });
 
 test('Agent candidate does not advance Controller; malformed or impersonated output cannot become approval', async () => {

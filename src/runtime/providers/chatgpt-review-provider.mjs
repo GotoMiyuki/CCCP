@@ -9,7 +9,7 @@ export class ChatGPTReviewProvider extends AgentProvider {
   #delegate; #providerId;
   constructor(options = {}) {
     super(); this.#providerId = options.providerId ?? `chatgpt-reviewer:${randomUUID()}`;
-    this.#delegate = new CodexAgentProvider({ ...options, providerId: this.#providerId, providerKind: 'chatgpt-reviewer' });
+    this.#delegate = new CodexAgentProvider({ ...options, providerId: this.#providerId, providerKind: 'chatgpt-reviewer', reviewBoundary: 'independent-run' });
   }
   async capabilities() { return { simulation: false, backend: 'codex-app-server', cancellation: true, recovery: true, independent_review: true,
     provider_id: this.#providerId, review_boundary: 'independent-run' }; }

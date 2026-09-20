@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { SqliteDatabase, SqliteStateStore, DurableBridge, AuditLog, FakeToolRunner } from '../src/index.mjs';
+import { SqliteDatabase, SqliteStateStore, DurableBridge, AuditLog, FakeToolRunner, RoutedAgentProvider } from '../src/index.mjs';
 import { durableFixture } from './fixtures/durable-host.mjs';
 import { prepareSimulation, simulationReport, simulationReview } from '../examples/runtime-workflow.mjs';
-import { codex } from '../examples/fixtures.mjs';
+import { chatgpt, codex, operationFixture } from '../examples/fixtures.mjs';
 
 const raises = code => error => error.code === code;
 const directories = [];
@@ -127,7 +127,7 @@ test('synthetic provider fault requires reconciliation even after FINISHED; a fa
   await sim.host.close(); await assert.rejects(sim.call('inspectTask', 'human'), raises('RUNTIME_CLOSED')); sim.database.close();
 });
 
-test('unfinished real Agent run fails closed until the original execution is proven stopped', async t => {
+test('unfinished and transport-failed real Agent runs fail closed until the original execution is proven stopped', async t => {
   const dir = await directory(); let sim = await durableFixture(dir);
   await sim.host.close(); sim.database.close();
   let database = await SqliteDatabase.open({ path: join(dir, 'runtime.sqlite') });
@@ -136,6 +136,10 @@ test('unfinished real Agent run fails closed until the original execution is pro
   data.agent_runs.push({ run_id: 'orphan-agent', kind: 'implement', review_level: null, status: 'RUNNING', simulation: false,
     context: { task_id: 'durable-task', principal: codex, state_version: data.snapshot.state_version, delegation_ref: data.approval.delegation.id,
       workspace_ref: 'durable-workspace', correlation_id: 'orphan' }, execution_binding: { backend: 'codex-app-server', pid: 424242, run_id: 'orphan-agent' } });
+  data.agent_runs.push({ run_id: 'failed-agent', kind: 'implement', review_level: null, status: 'FAILED', accepted: false,
+    reconciliation_required: true, external_execution_stopped: false, simulation: false,
+    context: { task_id: 'durable-task', principal: codex, state_version: data.snapshot.state_version, delegation_ref: data.approval.delegation.id,
+      workspace_ref: 'durable-workspace', correlation_id: 'failed' }, execution_binding: { backend: 'codex-app-server', pid: 424243, run_id: 'failed-agent' } });
   await state.compareAndSwap('durable-task', stored.store_revision, data); database.close();
   const provider = stopped => ({
     capabilities: async () => ({ simulation: false, backend: 'codex-app-server', cancellation: true, recovery: true, provider_id: 'recovery-agent' }),
@@ -146,6 +150,82 @@ test('unfinished real Agent run fails closed until the original execution is pro
   await assert.rejects(sim.call('recoverTask', 'human'), raises('RECONCILIATION_REQUIRED')); sim.database.close();
   sim = await durableFixture(dir, { start: false, agent: provider(true) }); t.after(() => sim.database.close());
   await sim.call('recoverTask', 'human');
-  const run = (await sim.call('inspectTask', 'human')).result.agent_runs.find(item => item.run_id === 'orphan-agent');
-  assert.equal(run.status, 'INTERRUPTED'); assert.equal(run.reconciliation.stopped, true);
+  const runs = (await sim.call('inspectTask', 'human')).result.agent_runs.filter(item => ['orphan-agent', 'failed-agent'].includes(item.run_id));
+  assert.equal(runs.length, 2); assert.ok(runs.every(run => run.status === 'INTERRUPTED' && run.accepted === false && run.reconciliation.stopped));
+});
+
+test('live resume reconciles an unverified real tool before another operation can run', async t => {
+  class UnverifiedTool extends FakeToolRunner {
+    stopped = false; runs = 0; reconciliations = 0;
+    async capabilities() { return { simulation: false, backend: 'docker', sandbox: 'docker', cancellation: true, recovery: true }; }
+    async describeAttempt() { return { backend: 'docker', identity: `probe-${this.runs + 1}` }; }
+    async run() { this.runs++; return { outcome: 'EFFECT_UNKNOWN', stdout: '', stderr: '', exit_code: null,
+      process_tree_stopped: false, simulation: false }; }
+    async reconcile() { this.reconciliations++; return { stopped: this.stopped, simulation: false }; }
+  }
+  const dir = await directory(), tool = new UnverifiedTool(); const sim = await durableFixture(dir, { tool }); t.after(() => sim.database.close());
+  await prepareSimulation(sim);
+  await assert.rejects(sim.call('executeTool', 'codex', { operation_id: 'op-1', attempt_id: 'unverified' }, { key: 'unverified' }), raises('EFFECT_UNKNOWN'));
+  await sim.call('inspectTask', 'human');
+  await assert.rejects(sim.call('resumeTask', 'codex', { resolution: 'Reality was inspected' }), raises('RECONCILIATION_REQUIRED'));
+  assert.equal(tool.runs, 1); assert.equal(tool.reconciliations, 1);
+  tool.stopped = true;
+  assert.equal((await sim.call('resumeTask', 'codex', { resolution: 'Old execution is now proven stopped' })).snapshot.state, 'DISCOVERY');
+  assert.equal((await sim.call('inspectTask', 'human')).result.operations[0].reconciliation.stopped, true);
+});
+
+test('a rejected independent R3 output cannot be resubmitted with a different evidence set', async t => {
+  let implementationOutput, reviewOutput;
+  const run = (request, patch) => ({ ...request, kind: request.kind, provider: 'test-provider', status: 'COMPLETED',
+    principal: request.context.principal, role: request.context.principal.role, termination_reason: 'completed',
+    external_execution_stopped: true, simulation: false, ...patch });
+  const implementer = {
+    capabilities: async () => ({ simulation: false, backend: 'codex-app-server', cancellation: true, recovery: true, provider_id: 'test-implementer' }),
+    deliberate: async () => {}, implement: async () => {}, review: async () => {}, cancel: async () => true, inspect: async () => null,
+    reconcile: async () => ({ stopped: true }),
+    dispatch(kind, request) { return { binding: { backend: 'codex-app-server', thread_id: 'implementation-thread' }, result: Promise.resolve(run(request, {
+      kind, provider_kind: 'codex-implementer', provider_instance: 'test-implementer', output: implementationOutput,
+      artifacts: { file_changes: [{ path: 'src/probe.txt', content: 'probe' }] },
+      execution_binding: { backend: 'codex-app-server', thread_id: 'implementation-thread', turn_id: 'implementation-turn' },
+    })) }; },
+  };
+  const reviewer = {
+    capabilities: async () => ({ simulation: false, backend: 'openai-responses', cancellation: true, recovery: true, independent_review: true,
+      provider_id: 'test-reviewer', review_boundary: 'independent-run' }),
+    review: async () => {}, cancel: async () => true, inspect: async () => null, reconcile: async () => ({ stopped: true }),
+    dispatch(kind, request) { return { binding: { backend: 'openai-responses', response_id: 'review-response' }, result: Promise.resolve(run(request, {
+      kind, provider_kind: 'openai-reviewer', provider_instance: 'test-reviewer', independent_review: true, review_boundary: 'independent-run',
+      output: reviewOutput, execution_binding: { backend: 'openai-responses', response_id: 'review-response' },
+    })) }; },
+  };
+  const tool = {
+    capabilities: async () => ({ simulation: false, backend: 'docker', sandbox: 'docker', cancellation: true, recovery: true }),
+    describeAttempt: async ({ attempt_id }) => ({ backend: 'docker', identity: attempt_id }), cancel: async () => true,
+    inspect: async () => null, reconcile: async () => ({ stopped: true }),
+    run: async request => ({ outcome: 'SUCCEEDED', stdout: '', stderr: '', exit_code: 0, process_tree_stopped: true,
+      repository_before: request.repository_snapshot, repository_after: request.repository_snapshot, simulation: false,
+      ...(request.agent_input ? { file_delta: { format: 'cccp-file-delta-v1', source_run_id: request.agent_input.source_run_id,
+        changes: [{ path: 'src/probe.txt', changed: true }] } } : {}) }),
+  };
+  const dir = await directory(); const agent = new RoutedAgentProvider({ implementer, reviewer });
+  const sim = await durableFixture(dir, { agent, tool, humanAcceptance: true }); t.after(() => sim.database.close());
+  await sim.call('discoverTask', 'codex');
+  const operations = [operationFixture({ id: 'apply' }), operationFixture({ id: 'test', domain: 'test_implementation' }), operationFixture({ id: 'extra' })];
+  await sim.call('planTask', 'codex', { summary: 'Independent review evidence binding probe', operations });
+  const begun = await sim.call('beginTask', 'codex');
+  implementationOutput = simulationReport(sim, begun.snapshot, { changed_files: [] });
+  await sim.call('dispatchAgent', 'codex', { kind: 'implement', run_id: 'implementation', template_version: 'test', input: {} });
+  const refs = [];
+  for (const id of ['apply', 'test', 'extra']) refs.push((await sim.call('executeTool', 'codex',
+    { operation_id: id, attempt_id: id, ...(id === 'apply' ? { agent_run_id: 'implementation' } : {}) }, { key: id })).result.evidence_ref);
+  await sim.call('submitReport', 'codex', implementationOutput);
+  for (const level of ['R1', 'R2']) await sim.call('submitReview', 'codex', { review: simulationReview(sim, level, refs[1]), evidence_refs: [refs[1]] });
+  await sim.call('routeReview', 'codex');
+  reviewOutput = simulationReview(sim, 'R3', refs[2], { id: 'rejected-r3', reviewer: chatgpt });
+  await assert.rejects(sim.call('dispatchAgent', 'chatgpt', { kind: 'review', review_level: 'R3', run_id: 'rejected-r3-run',
+    template_version: 'test', input: { evidence_refs: refs.slice(0, 2) } }), raises('INVALID_EVIDENCE'));
+  const rejected = (await sim.call('inspectTask', 'human')).result.agent_runs.find(item => item.run_id === 'rejected-r3-run');
+  assert.equal(rejected.status, 'COMPLETED'); assert.equal(rejected.accepted, false);
+  await assert.rejects(sim.call('submitReview', 'chatgpt', { review: reviewOutput, evidence_refs: [refs[2]] }), raises('AUTHORITY_BOUNDARY_EXCEEDED'));
+  assert.equal((await sim.call('inspectTask', 'human')).snapshot.state, 'ARCHITECTURE_REVIEW');
 });

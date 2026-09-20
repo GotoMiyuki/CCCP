@@ -36,12 +36,12 @@ function promptFor(kind, request) {
 }
 
 export class CodexAgentProvider extends AgentProvider {
-  #client; #cwd; #model; #providerId; #kind; #timeoutMs; #runs = new Map();
+  #client; #cwd; #model; #providerId; #kind; #reviewBoundary; #timeoutMs; #runs = new Map();
   constructor({ client = new CodexAppServerClient(), cwd, model, timeoutMs = 300000,
-    providerId = `codex-implementer:${randomUUID()}`, providerKind = 'codex-implementer' } = {}) {
+    providerId = `codex-implementer:${randomUUID()}`, providerKind = 'codex-implementer', reviewBoundary = null } = {}) {
     super(); nonempty(cwd, 'Codex workspace'); nonempty(providerId, 'providerId'); this.#client = client; this.#cwd = cwd; this.#model = model;
     requireRuntime(Number.isSafeInteger(timeoutMs) && timeoutMs > 0, 'INVALID_RUNTIME_CONTRACT', 'Agent timeout must be a positive integer');
-    this.#providerId = providerId; this.#kind = providerKind; this.#timeoutMs = timeoutMs;
+    this.#providerId = providerId; this.#kind = providerKind; this.#reviewBoundary = reviewBoundary; this.#timeoutMs = timeoutMs;
   }
   async capabilities() { return { simulation: false, backend: 'codex-app-server', cancellation: true, recovery: true, independent_review: false, provider_id: this.#providerId }; }
   async deliberate(request) { return this.#run('deliberate', request); }
@@ -61,11 +61,12 @@ export class CodexAgentProvider extends AgentProvider {
       check(outputName, response.output.output);
       const fileChanges = kind === 'implement' ? validateFileChanges(response.output.file_changes) : undefined;
       const run = jsonCopy({ ...request, kind, provider: 'openai-codex-app-server', provider_kind: this.#kind, provider_instance: this.#providerId,
+        ...(kind === 'review' && this.#reviewBoundary ? { independent_review: true, review_boundary: this.#reviewBoundary } : {}),
         model: this.#model ?? 'configured-default',
         principal: request.context.principal, role: request.context.principal.role, status: 'COMPLETED', output: response.output.output,
         ...(fileChanges ? { artifacts: { file_changes: fileChanges } } : {}), execution_binding: { ...launched.binding, thread_id: response.thread_id, turn_id: response.turn_id },
         termination_reason: 'completed', started_at: new Date(started).toISOString(), finished_at: new Date().toISOString(),
-        usage: response.usage ?? { tokens: null, duration_ms: Date.now() - started }, simulation: false });
+        usage: response.usage ?? { tokens: null, duration_ms: Date.now() - started }, external_execution_stopped: true, simulation: false });
       this.#runs.set(request.run_id, run); return run;
     }).catch(error => {
       this.#runs.set(request.run_id, jsonCopy({ run_id: request.run_id, kind, status: error.code === 'EXECUTION_INTERRUPTED' ? 'INTERRUPTED' : 'FAILED',

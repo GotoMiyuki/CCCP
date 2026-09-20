@@ -4,6 +4,9 @@ import { jsonCopy } from './contracts.mjs';
 import { requireRuntime } from './errors.mjs';
 import { requiresReconciliation } from './tools/effect-reconciler.mjs';
 
+const requiresAgentReconciliation = run => run.simulation === false && (run.status === 'RUNNING' || run.reconciliation_required === true
+  || ['FAILED', 'INTERRUPTED'].includes(run.status) && run.external_execution_stopped !== true);
+
 export async function recoverController({ state, workspace, tool, agent, taskId, context }) {
   await state.acquireTask(taskId);
   const stored = await state.recover(taskId), data = stored.data;
@@ -31,14 +34,15 @@ export async function recoverController({ state, workspace, tool, agent, taskId,
   const lease = journal.controller.state === 'DONE' ? null : await workspace.acquireLease(bound.repository_identity, taskId, 'write');
   const runs = new Map();
   for (const run of data.agent_runs) {
-    if (run.status !== 'RUNNING') { runs.set(run.run_id, run); continue; }
+    if (!requiresAgentReconciliation(run)) { runs.set(run.run_id, run); continue; }
     let reconciliation = { stopped: true, reason: 'simulated_host_restart' };
     if (run.simulation === false) {
       requireRuntime(typeof agent.reconcile === 'function', 'RECONCILIATION_REQUIRED', 'Real Agent provider must reconcile unfinished runs');
       reconciliation = await agent.reconcile(run);
       requireRuntime(reconciliation.stopped === true, 'RECONCILIATION_REQUIRED', 'Prior Agent execution may still be running');
     }
-    runs.set(run.run_id, jsonCopy({ ...run, status: 'INTERRUPTED', accepted: false, termination_reason: 'host_restarted', reconciliation }));
+    runs.set(run.run_id, jsonCopy({ ...run, status: 'INTERRUPTED', accepted: false, external_execution_stopped: true,
+      reconciliation_required: false, termination_reason: 'host_restarted', reconciliation }));
   }
   return { id: taskId, controller: journal.controller, journal, approval: journal.approval, workspace: bound, lease,
     revision: stored.store_revision, operations, runs,

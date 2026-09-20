@@ -6,7 +6,7 @@ M3 的 ProcessToolRunner、GitWorkspaceManager、持久仓库租约和真实 Doc
 
 M2 扩展已实现，见 [PERSISTENCE_SPEC.md](PERSISTENCE_SPEC.md) 和 [ADR 0002](adr/0002-durable-runtime.md)。下文 M1 能力限制与 RT-01～RT-10 保留为历史基线；装配 SQLite State/Evidence/Identity providers 时，Runtime contract 为 0.2、storage schema 为 sqlite-1，支持受验证的 recoverTask。内存装配仍明确拒绝 crash_recovery。真实 Agent 与独立 R3 Provider 的 M4 接线已实现；本轮源码和审计材料的最终独立 R3 审查另行进行，见 [M4 R3 交接](M4_R3_HANDOFF.md)。
 
-状态：Human 批准范围内的实现规范。对应 CCCP Protocol 1.0；Runtime contract 0.2；Runtime implementation 0.2.0-dev。包版本仍为 0.1.1。
+状态：Human 批准范围内的实现规范。对应 CCCP Protocol 1.0；Runtime contract 0.2；Runtime implementation 与包版本为 0.2.0。
 
 ## 1. 范围与信任边界
 
@@ -52,7 +52,7 @@ M1 历史基线支持内存记录、fake Agent / ToolRunner、注册式 workspac
 | routeReview | `{}`；ExecutionLifecycle.route |
 | acceptTask | `{ reason }`；ExecutionLifecycle.accept |
 | stopTask | `{ reason }`；认证 Human → override(state=BLOCKED)，不等待正在运行的任务锁 |
-| resumeTask | `{ resolution, discovery? }`；ExecutionLifecycle.resume；Repository block 的 Discovery 由宿主重新观察，忽略外部伪造观察 |
+| resumeTask | `{ resolution, discovery? }`；先对账所有未证明停止的真实 Agent/tool execution，再由宿主重新观察 Repository block 的 Discovery，最后调用 ExecutionLifecycle.resume；忽略外部伪造观察 |
 | recoverTask | 明确 UNSUPPORTED_CAPABILITY；不使用 JSON 重建已批准任务 |
 
 写方法返回 `{ context, snapshot, result }`；context 含最新 state_version。inspectTask 另含 specification、delegation、协议审计，供构造报告/Review；没有可变 Controller 句柄。

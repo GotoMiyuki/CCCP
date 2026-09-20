@@ -3,7 +3,7 @@ import test from 'node:test';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { ChatGPTReviewProvider, CodexAgentProvider, OpenAIReviewProvider, RoutedAgentProvider, agentFileDelta, captureAgentFiles, validateFileChanges } from '../src/index.mjs';
+import { ChatGPTReviewProvider, CodexAgentProvider, DeepSeekReviewProvider, OpenAIReviewProvider, RoutedAgentProvider, agentFileDelta, captureAgentFiles, validateFileChanges } from '../src/index.mjs';
 import { codex, chatgpt } from '../examples/fixtures.mjs';
 
 const context = principal => ({ task_id: 'task', principal, state_version: 3, delegation_ref: 'delegation', workspace_ref: 'workspace', correlation_id: 'correlation' });
@@ -88,6 +88,24 @@ test('OpenAI recovery accepts a confirmed cancelled response', async () => {
   const provider = new OpenAIReviewProvider({ apiKey: 'test-key', model: 'review-model', fetchImpl, pollMs: 0 });
   assert.deepEqual(await provider.reconcile({ execution_binding: { response_id: 'resp_1' } }),
     { stopped: true, result_discarded: true, reason: 'recovered_cancelled' });
+});
+
+test('DeepSeek review provider uses the Responses wire format without claiming OpenAI provenance', async () => {
+  let request;
+  const fetchImpl = async (url, options = {}) => { request = { url, options }; return { ok: true, status: 200, json: async () => ({
+    id: 'deepseek-response', status: 'completed', model: 'deepseek-flash', output_text: JSON.stringify(review), usage: { input_tokens: 1, output_tokens: 1 },
+  }) }; };
+  const provider = new DeepSeekReviewProvider({ apiKey: 'test-key', model: 'deepseek-flash', fetchImpl, pollMs: 0 });
+  const capabilities = await provider.capabilities();
+  const run = await provider.review(base(chatgpt, { review_level: 'R3', output_schema: 'ReviewResult', allowed_tools: [] }));
+  assert.equal(request.url, 'https://api.deepseek.com/responses');
+  const body = JSON.parse(request.options.body);
+  assert.equal(body.background, undefined); assert.equal(body.store, undefined); assert.equal(body.metadata, undefined);
+  assert.equal(capabilities.backend, 'deepseek-responses'); assert.equal(capabilities.independent_review, true);
+  assert.equal(capabilities.recovery, false); assert.equal(capabilities.cancellation, false);
+  assert.equal(run.provider, 'deepseek-responses'); assert.equal(run.provider_kind, 'deepseek-reviewer');
+  assert.equal(run.execution_binding.backend, 'deepseek-responses'); assert.equal(run.review_boundary, 'independent-run');
+  assert.deepEqual(await provider.reconcile(run), { stopped: false, result_discarded: false, reason: 'stateless_response_unverifiable' });
 });
 
 test('Routed provider advertises real agents only with a distinct independent reviewer', async () => {

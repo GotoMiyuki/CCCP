@@ -22,6 +22,8 @@ const roleFor = {
   dispatchAgent: ['human', 'codex', 'chatgpt'], inspectTask: ['human', 'codex', 'chatgpt'], recoverTask: ['human', 'codex'],
 };
 const cycle = task => `${task.controller.snapshot.decision_id}:${task.controller.snapshot.revision_count}`;
+const requiresAgentReconciliation = run => run.simulation === false && (run.status === 'RUNNING' || run.reconciliation_required === true
+  || ['FAILED', 'INTERRUPTED'].includes(run.status) && run.external_execution_stopped !== true);
 
 export class HostRuntime {
   #providers; #manifest; #tasks = new Map(); #starting = new Set(); #audit = new AuditLog(); #discovery; #closed = false; #inflight = 0;
@@ -44,6 +46,10 @@ export class HostRuntime {
     this.#closed = true;
     for (const task of this.#tasks.values()) {
       await task.saving;
+      for (const run of task.runs.values()) if (requiresAgentReconciliation(run)) {
+        const result = await this.#providers.agent.reconcile(run);
+        requireRuntime(result.stopped, 'RECONCILIATION_REQUIRED', 'Do not release lease while an Agent run may still be active');
+      }
       for (const operation of task.operations.values()) if (operation.simulation === false && requiresReconciliation(operation)) {
         const result = await this.#providers.tool.reconcile({ task_id: task.id, attempt_id: operation.attempt_id, workspace: task.workspace, execution_binding: operation.execution_binding });
         requireRuntime(result.stopped, 'RECONCILIATION_REQUIRED', 'Do not release lease while tool may still run');
@@ -81,6 +87,22 @@ export class HostRuntime {
   }
   #adapter(task, context) {
     return new CodexAdapter({ controller: task.controller, actor: context.principal, discovery: this.#discovery });
+  }
+  async #reconcileExternalWork(task) {
+    for (const [id, run] of task.runs) if (requiresAgentReconciliation(run)) {
+      requireRuntime(typeof this.#providers.agent.reconcile === 'function', 'RECONCILIATION_REQUIRED', 'Real Agent provider must reconcile unfinished runs');
+      const reconciliation = await this.#providers.agent.reconcile(run);
+      requireRuntime(reconciliation.stopped === true, 'RECONCILIATION_REQUIRED', 'Prior Agent execution may still be running');
+      task.runs.set(id, jsonCopy({ ...run, status: 'INTERRUPTED', accepted: false, external_execution_stopped: true,
+        reconciliation_required: false, termination_reason: 'reconciled_before_resume', reconciliation }));
+    }
+    for (const [id, operation] of task.operations) if (requiresReconciliation(operation)) {
+      requireRuntime(typeof this.#providers.tool.reconcile === 'function', 'RECONCILIATION_REQUIRED', 'Real tool execution requires reconciliation before continuation');
+      const reconciliation = await this.#providers.tool.reconcile({ task_id: task.id, attempt_id: id, workspace: task.workspace,
+        execution_binding: operation.execution_binding });
+      requireRuntime(reconciliation.stopped === true, 'RECONCILIATION_REQUIRED', 'Prior tool execution may still be running');
+      task.operations.set(id, jsonCopy({ ...operation, reconciliation }));
+    }
   }
   async #call(action, input, perform, { create = false, readOnly = false, stop = false } = {}) {
     let request, context, task, key, claimed = false, locked = false, creating = false, performed = false;
@@ -229,6 +251,7 @@ export class HostRuntime {
   }
   async resumeTask(request) {
     return this.#call('resumeTask', request, async (task, context, payload) => {
+      await this.#reconcileExternalWork(task); this.#unchanged(task, context);
       let discovery;
       if (task.controller.snapshot.blocked_reports.some(b => b.category === 'REPOSITORY_FAILURE')) {
         discovery = await this.#discovery(task.controller.profile.repository, task.discoveryOptions); this.#unchanged(task, context);
@@ -246,6 +269,7 @@ export class HostRuntime {
       oneOf(payload.kind, ['deliberate', 'implement', 'review'], 'Agent kind');
       nonempty(payload.run_id, 'run_id'); nonempty(payload.template_version, 'template_version');
       requireRuntime(!task.runs.has(payload.run_id), 'RUN_ALREADY_EXISTS', 'Run cannot be reused');
+      requireRuntime(![...task.runs.values()].some(requiresAgentReconciliation), 'RECONCILIATION_REQUIRED', 'Prior Agent execution must be reconciled before dispatch');
       const state = task.controller.state;
       let output_schema;
       if (payload.kind === 'implement') {
@@ -275,6 +299,7 @@ export class HostRuntime {
           let delta; try { delta = JSON.parse(artifact.content); } catch { delta = null; }
           const attempt = task.operations.get(artifact.operation_id), source = attempt && task.runs.get(attempt.agent_run_id);
           requireRuntime(delta?.format === 'cccp-file-delta-v1' && delta.source_run_id === attempt?.agent_run_id && source?.status === 'COMPLETED'
+            && source.accepted === true && source.accepted_cycle === cycle(task)
             && delta.changes?.some(change => change.changed), 'INVALID_EVIDENCE', 'R3 DIFF must be an actual delta bound to a completed implementation run');
         }
         const latestSnapshot = [...task.operations.values()].map(operation => operation.result?.repository_after).filter(Boolean).at(-1)
@@ -287,8 +312,10 @@ export class HostRuntime {
         context_snapshot: task.controller.snapshot, repository_snapshot: task.controller.snapshot.discovery ?? { repository: task.workspace.repository_identity },
         delegation: task.controller.delegation, allowed_tools: payload.kind === 'implement' ? ['read_repository'] : [], simulation: agentSimulation });
       task.runs.set(payload.run_id, jsonCopy({ run_id: payload.run_id, context, kind: payload.kind, review_level: payload.review_level ?? null,
-        provider: this.#manifest.provider_capabilities.agent.backend ?? 'fake', status: 'RUNNING', simulation: agentSimulation }));
+        provider: this.#manifest.provider_capabilities.agent.backend ?? 'fake', status: 'RUNNING', accepted: false,
+        reconciliation_required: agentSimulation === false, external_execution_stopped: agentSimulation, simulation: agentSimulation }));
       task.active = { provider: this.#providers.agent, id: payload.run_id };
+      let observedRun = null;
       try {
         await this.#save(task); this.#unchanged(task, context);
         let pending;
@@ -303,9 +330,9 @@ export class HostRuntime {
           task.runs.set(payload.run_id, jsonCopy({ ...task.runs.get(payload.run_id), execution_binding: dispatched.binding }));
           await this.#save(task); pending = dispatched.result;
         } else pending = this.#providers.agent[payload.kind](runRequest);
-        const run = jsonCopy(await pending);
+        const run = jsonCopy(await pending); observedRun = run;
         requireRuntime(run.run_id === payload.run_id && canonical(run.context) === canonical(context) && run.simulation === agentSimulation, 'INVALID_RUNTIME_CONTRACT', 'Agent result binding mismatch');
-        task.runs.set(payload.run_id, run); this.#unchanged(task, context);
+        this.#unchanged(task, context);
         requireRuntime(run.status === 'COMPLETED', 'EXECUTION_INTERRUPTED', 'Agent run did not complete');
         check(output_schema, run.output);
         if (payload.kind === 'implement' && !agentSimulation) {
@@ -319,11 +346,20 @@ export class HostRuntime {
           const cited = [...run.output.evidence, ...run.output.requirements.flatMap(item => item.evidence)];
           requireRuntime(cited.length > 0 && cited.every(ref => allowed.has(ref)), 'INVALID_EVIDENCE', 'Agent review cited evidence outside its frozen input');
         }
-        return run;
+        const accepted = jsonCopy({ ...run, accepted: true, accepted_cycle: cycle(task), reconciliation_required: false,
+          external_execution_stopped: true, ...(payload.kind === 'review' && !agentSimulation
+            ? { accepted_evidence_refs: agentInput.artifacts.map(artifact => artifact.artifact_ref) } : {}) });
+        task.runs.set(payload.run_id, accepted);
+        return accepted;
       } catch (error) {
-        const run = task.runs.get(payload.run_id);
+        const run = observedRun ?? task.runs.get(payload.run_id);
+        const remoteStopped = observedRun?.status === 'COMPLETED' || agentSimulation;
         task.runs.set(payload.run_id, jsonCopy({ ...run, status: run.status === 'RUNNING' ? 'FAILED' : run.status,
-          accepted: false, error_code: error.code ?? 'AGENT_FAILED' })); throw error;
+          accepted: false, external_execution_stopped: remoteStopped, reconciliation_required: !remoteStopped,
+          error_code: error.code ?? 'AGENT_FAILED' }));
+        if (!remoteStopped && task.controller.state !== 'BLOCKED') task.controller.block(context.principal, 'MISSING_INFORMATION',
+          'Agent execution ended without proof that the external run stopped', [payload.run_id]);
+        throw error;
       } finally { task.active = null; }
     });
   }
@@ -332,6 +368,8 @@ export class HostRuntime {
       record(payload, 'Tool dispatch', ['operation_id', 'attempt_id', 'agent_run_id']); nonempty(payload.operation_id, 'operation_id'); nonempty(payload.attempt_id, 'attempt_id');
       nonempty(input.idempotency_key, 'idempotency_key');
       requireRuntime(!task.operations.has(payload.attempt_id), 'ATTEMPT_ALREADY_EXISTS', 'Attempt cannot be reused');
+      requireRuntime(![...task.runs.values()].some(requiresAgentReconciliation)
+        && ![...task.operations.values()].some(requiresReconciliation), 'RECONCILIATION_REQUIRED', 'Prior external execution must be reconciled before running another tool');
       task.lease = await this.#providers.workspace.renewLease(task.lease.lease_id); this.#unchanged(task, context);
       const adapter = this.#adapter(task, context);
       return adapter.execute(payload.operation_id, async operation => {
@@ -347,7 +385,8 @@ export class HostRuntime {
           let agent_input;
           if (payload.agent_run_id) {
             const source = task.runs.get(payload.agent_run_id);
-            requireRuntime(source?.status === 'COMPLETED' && source.kind === 'implement' && source.context.principal.id === context.principal.id,
+            requireRuntime(source?.status === 'COMPLETED' && source.accepted === true && source.accepted_cycle === cycle(task)
+              && source.kind === 'implement' && source.context.principal.id === context.principal.id,
               'INVALID_RUNTIME_CONTRACT', 'Tool input must come from the active implementer run');
             agent_input = { file_changes: validateFileChanges(source.artifacts?.file_changes), source_run_id: source.run_id };
             requireRuntime(agent_input.file_changes.every(change => operation.paths.some(root => pathWithin(change.path, root))),
@@ -404,9 +443,15 @@ export class HostRuntime {
       }
       if (payload.review.review_level === 'R3' && this.#manifest.capabilities.independent_r3) {
         const source = [...task.runs.values()].find(run => run.kind === 'review' && run.review_level === 'R3' && run.status === 'COMPLETED'
-          && run.context.principal.id === context.principal.id && canonical(run.output) === canonical(payload.review));
-        const implementation = [...task.runs.values()].find(run => run.kind === 'implement' && run.status === 'COMPLETED' && run.context.principal.id === task.implementer);
-        requireRuntime(source && implementation && source.context.principal.id !== task.implementer && source.provider_kind === 'chatgpt-reviewer'
+          && run.accepted === true && run.accepted_cycle === cycle(task) && run.context.principal.id === context.principal.id
+          && canonical(run.output) === canonical(payload.review));
+        const implementation = [...task.runs.values()].find(run => run.kind === 'implement' && run.status === 'COMPLETED'
+          && run.accepted === true && run.accepted_cycle === cycle(task) && run.context.principal.id === task.implementer);
+        const submittedRefs = new Set(payload.evidence_refs.map(ref => ref.artifact_ref));
+        requireRuntime(source && source.accepted_evidence_refs?.length === submittedRefs.size
+          && source.accepted_evidence_refs.every(ref => submittedRefs.has(ref))
+          && implementation && source.context.principal.id !== task.implementer && source.independent_review === true
+          && source.review_boundary === 'independent-run'
           && source.provider_instance !== implementation.provider_instance && source.run_id !== implementation.run_id
           && source.execution_binding?.thread_id !== implementation.execution_binding?.thread_id,
         'AUTHORITY_BOUNDARY_EXCEEDED',

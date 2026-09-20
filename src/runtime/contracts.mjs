@@ -48,7 +48,7 @@ export function validatePort(name, port) {
 export function validateCapabilities(value) {
   record(value, 'provider capabilities', ['simulation', 'cancellation', 'durable', 'recovery', 'backend', 'sandbox', 'cross_process', 'independent_review', 'provider_id', 'review_boundary']);
   requireRuntime(typeof value.simulation === 'boolean', 'INVALID_RUNTIME_CONTRACT', 'simulation must be explicit');
-  if (!value.simulation) requireRuntime(['sqlite', 'docker', 'git-worktree', 'codex-app-server', 'openai-responses', 'routed-agent'].includes(value.backend), 'UNSUPPORTED_CAPABILITY', 'Unsupported real provider backend');
+  if (!value.simulation) requireRuntime(['sqlite', 'docker', 'git-worktree', 'codex-app-server', 'openai-responses', 'deepseek-responses', 'routed-agent'].includes(value.backend), 'UNSUPPORTED_CAPABILITY', 'Unsupported real provider backend');
   for (const field of ['cancellation', 'durable', 'recovery', 'cross_process', 'independent_review']) if (field in value) requireRuntime(typeof value[field] === 'boolean', 'INVALID_RUNTIME_CONTRACT', `${field} must be boolean`);
   if ('provider_id' in value) nonempty(value.provider_id, 'provider_id');
   if ('review_boundary' in value) oneOf(value.review_boundary, ['independent-run'], 'review_boundary');

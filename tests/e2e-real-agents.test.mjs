@@ -46,7 +46,7 @@ async function evidenceReview(host, specification, reportId, level, refs) {
     reason: 'Host verified the recorded real diff and test artifacts.' }, evidence_refs: refs });
 }
 
-test('real Codex implementation and independent ChatGPT R3 reach Human Acceptance', real, async () => {
+test('real Codex implementation and independent configured R3 reach Human Acceptance', real, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'cccp-m4-real-'));
   let fixture;
   try {

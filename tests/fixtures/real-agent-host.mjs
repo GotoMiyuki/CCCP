@@ -2,7 +2,7 @@ import { access, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { ChatGPTReviewProvider, CodexAgentProvider, GitWorkspaceManager, HostRuntime, OpenAIReviewProvider, ProcessToolRunner,
+import { ChatGPTReviewProvider, CodexAgentProvider, DeepSeekReviewProvider, GitWorkspaceManager, HostRuntime, OpenAIReviewProvider, ProcessToolRunner,
   RoutedAgentProvider, SqliteDatabase, SqliteEvidenceStore, SqliteIdentityProvider, SqliteStateStore, defaultProfile } from '../../src/index.mjs';
 import { approvalFixture, chatgpt, codex, human } from '../../examples/fixtures.mjs';
 
@@ -28,7 +28,9 @@ export async function realAgentHost(directory, { start = true, recover = false, 
       'run-fixture-tests': { domain: 'test_implementation', paths: ['src', 'tests'], write: false, argv: ['/usr/local/bin/node', '/workspace/tests/verify.mjs'] },
     } });
     const implementer = new CodexAgentProvider({ cwd: registered.repository_identity, model: process.env.CCCP_CODEX_MODEL });
-    const reviewer = process.env.OPENAI_API_KEY && process.env.CCCP_REVIEW_MODEL
+    const reviewer = process.env.DEEPSEEK_API_KEY
+      ? new DeepSeekReviewProvider({ apiKey: process.env.DEEPSEEK_API_KEY, model: process.env.CCCP_DEEPSEEK_MODEL ?? 'deepseek-flash' })
+      : process.env.OPENAI_API_KEY && process.env.CCCP_REVIEW_MODEL
       ? new OpenAIReviewProvider({ apiKey: process.env.OPENAI_API_KEY, model: process.env.CCCP_REVIEW_MODEL })
       : new ChatGPTReviewProvider({ cwd: registered.repository_identity, model: process.env.CCCP_REVIEW_MODEL ?? process.env.CCCP_CODEX_MODEL });
     const providers = { workspace, tool, agent: new RoutedAgentProvider({ implementer, reviewer }), state: new SqliteStateStore({ database }),

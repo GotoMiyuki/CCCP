@@ -11,6 +11,7 @@ export * from './providers/fake-agent-provider.mjs';
 export * from './providers/codex-app-server-client.mjs';
 export * from './providers/codex-agent-provider.mjs';
 export * from './providers/openai-review-provider.mjs';
+export * from './providers/deepseek-review-provider.mjs';
 export * from './providers/chatgpt-review-provider.mjs';
 export * from './providers/routed-agent-provider.mjs';
 export * from './stores/state-store.mjs';

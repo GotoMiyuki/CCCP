@@ -43,3 +43,13 @@
 本机 Codex CLI `0.154.0-alpha.6.2` 无法使用默认 `gpt-6-astra` 或 `gpt-5.6-terra`，服务端要求更新客户端；真实验收显式使用 `gpt-5.5`。模型仍是宿主配置，Core 未写死。多任务调度、完整 capability negotiation、Threat Model、外部 Conformance 和 CI/release 属于 M5。
 
 运行时 E2E 中的独立 R3 已通过；本轮 M4 源码、设计和审计附件的最终独立 R3 审查已拆分到下一对话。交接材料和判定规则见 [M4 R3 交接](../M4_R3_HANDOFF.md)。最终 Human Acceptance 必须由 Human 明示，当前不伪造 DONE。
+
+## 2026-09-20 独立 R3 Revision
+
+独立 R3 复现出三条边界缺陷：被 Host 拒绝但 provider 已完成的输出仍可能被下游消费；带外部 binding 的 FAILED Agent run 在恢复时可能跳过 reconciliation；未证明进程树停止的工具尝试可在当前 Host 内通过重新 Discovery 后继续执行。
+
+修复后，Agent run 只有完成全部本地校验并绑定当前 cycle 才记录 `accepted=true`。Tool input、R3 DIFF 来源和独立 R3 提交均要求 accepted run；R3 还要求提交 Artifact 集合与冻结输入一致。真实 Agent 的 RUNNING 或未证明外部终态的 FAILED/INTERRUPTED run 在恢复、resume、后续 dispatch 和 close 前均 fail-closed。真实工具的未确认终态在当前 Host 的 resume 和后续 tool dispatch 前同样强制 reconciliation。
+
+新增 `DeepSeekReviewProvider`，使用 DeepSeek 的无状态 Responses API 和结构化输出。provider 明确记录 `deepseek-responses` / `deepseek-reviewer` provenance；不发送其不支持的 background、store 或 metadata 参数，不宣称远端 cancellation/recovery。常规测试不调用模型；`CCCP_DEEPSEEK_TESTS=1` 可单独执行低成本真实 API contract test，真实 Agent E2E 在设置 `DEEPSEEK_API_KEY` 时优先使用 DeepSeek reviewer。既有 ChatGPT/OpenAI M4 审计附件保持原样。
+
+本轮本地验证：新增 DeepSeek opt-in 后默认测试总数为 204，194 PASS、0 FAIL、10 个 Docker/真实 Agent opt-in SKIP；Schema/state artifact check 9 项通过，`git diff --check` 通过。后续真实验证结果和 v0.2.0 版本结论见 [v0.2.0 Host Runtime 开发日志](2026-09-20-v0.2.0-host-runtime.md)。

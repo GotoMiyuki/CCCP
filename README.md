@@ -2,7 +2,7 @@
 
 根据 **CCCP v1.0 Design Guide** 实现的首版协议参考库。使用 Node.js 标准库，无第三方运行或测试依赖。
 
-冻结语义以原始 Design Guide 为准。包版本 `0.1.1` 是实现版本，消息中的协议版本仍为 `1.0`。新增 Schema 和实现规范均为可审查的实现草案，未宣布冻结 CCCP v1.1。
+冻结语义以原始 Design Guide 为准。包版本 `0.2.0` 是实现版本，消息中的协议版本仍为 `1.0`。新增 Schema 和实现规范均为可审查的实现草案，未宣布冻结 CCCP v1.1。
 
 ## 运行
 
@@ -33,7 +33,7 @@ node src/cli.mjs validate Profile examples/project-profile.json
 - Codex Adapter 接口、进程内 Bridge、可运行演示和自动测试。
 - Host Runtime M0/M1：六端口 contract、内存/fake providers、认证上下文、进程内 CAS/幂等、模拟工具 Evidence 与 contract tests。
 - M2：SQLite 状态、证据、会话、持久 Bridge 与受验证恢复；M3 Docker 工具、Git worktree、持久租约和真实隔离验收已完成。
-- M4：真实 Codex 实施 Agent、独立 ChatGPT/OpenAI R3 Provider、真实 DIFF/TEST_RUN Evidence，以及正常和 crash-recovery E2E 已完成；两条流程均停在 `HUMAN_ACCEPTANCE`。
+- M4：真实 Codex 实施 Agent、独立 ChatGPT/OpenAI R3 Provider、可选 DeepSeek 开发期 Review 后端、真实 DIFF/TEST_RUN Evidence；Codex + ChatGPT 的正常和 crash-recovery E2E 已到 `HUMAN_ACCEPTANCE`。DeepSeek API contract 已验证，完整 DeepSeek E2E 的已知限制见 v0.2.0 开发日志。
 
 Runtime 入口是 `HostRuntime.create({ providers, discovery? })`，通过 `src/index.mjs` 或 `src/runtime/index.mjs` 导入。完整装配示例见 [examples/runtime-workflow.mjs](examples/runtime-workflow.mjs)。`npm run demo:runtime` 经认证模拟会话、fake Agent、fake 工具、Artifact 校验和既有 Controller 完成流程；输出始终标为 `SIMULATION ONLY`。
 
@@ -60,7 +60,7 @@ Runtime 入口是 `HostRuntime.create({ providers, discovery? })`，通过 `src/
 | 条款与实现、测试对应关系 | [docs/CONFORMANCE.md](docs/CONFORMANCE.md) |
 | 本次实现与验证报告 | [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md) |
 | 后续加固与回归结果 | [docs/OPTIMIZATION_REPORT.md](docs/OPTIMIZATION_REPORT.md) |
-| 开发日志 | [docs/development_logs/2026-09-16-v0.1.1-macos-compatibility.md](docs/development_logs/2026-09-16-v0.1.1-macos-compatibility.md) |
+| v0.2.0 开发日志与验证结论 | [docs/development_logs/2026-09-20-v0.2.0-host-runtime.md](docs/development_logs/2026-09-20-v0.2.0-host-runtime.md) |
 | 对外导出 | `src/index.mjs` |
 | 机器可读产物 | `schemas/` |
 
@@ -72,6 +72,6 @@ Bridge 的会话、去重和审计保存在内存中；可导出审计记录，�
 
 独立 R3 的运行时机制已由两条真实 E2E 验证；**本次 M4 代码、文档和审计证据尚未获得最终独立 R3 审查**，该审查已拆分为单独交接，见 [M4 R3 交接](docs/M4_R3_HANDOFF.md)。
 
-M0/M1 的历史基线与 Runtime contract/workflow 测试保留；当前完整回归结果及运行环境见 [M4 E2E 报告](docs/M4_E2E_REPORT.md)。Runtime 标记为 `0.2.0-dev`，包版本保持 `0.1.1`，协议保持 `1.0`。
+M0/M1 的历史基线与 Runtime contract/workflow 测试保留；当前完整回归结果及运行环境见 [v0.2.0 开发日志](docs/development_logs/2026-09-20-v0.2.0-host-runtime.md)。Runtime 与包版本均为 `0.2.0`，协议保持 `1.0`。
 
 M1 内存装配仍关闭 durable state/crash recovery。M2 可选 SQLite providers 使用内置 node:sqlite，要求 Node >=24.14，无新增 npm 包；凭证只存哈希。恢复通过既有 Controller 公共接口重放并验证审计，不接受请求上传的审批 snapshot。工具未知效果与不确定投递不自动重试。M3 Docker 后端和 M4 真实模型接线均已完成验收；最终独立代码审查与 Human Acceptance 仍待完成。
