@@ -26,4 +26,6 @@ test('real DeepSeek structured review returns a provider-bound candidate without
   assert.equal(run.status, 'COMPLETED'); assert.equal(run.provider, 'deepseek-responses');
   assert.equal(run.provider_kind, 'deepseek-reviewer'); assert.equal(run.output.reviewer.id, chatgpt.id);
   assert.equal(run.output.review_level, 'R3');
+  const citations = [...run.output.evidence, ...run.output.requirements.flatMap(requirement => requirement.evidence)];
+  assert.ok(citations.every(ref => ref === artifact_ref), 'DeepSeek citations must use the frozen artifact reference');
 });

@@ -25,6 +25,23 @@ const cycle = task => `${task.controller.snapshot.decision_id}:${task.controller
 const requiresAgentReconciliation = run => run.simulation === false && (run.status === 'RUNNING' || run.reconciliation_required === true
   || ['FAILED', 'INTERRUPTED'].includes(run.status) && run.external_execution_stopped !== true);
 
+function verifiedReadOnly(attempt) {
+  const result = attempt.result;
+  const before = result?.repository_before?.fingerprint;
+  return attempt.phase === 'FINISHED' && attempt.outcome === 'SUCCEEDED' && !attempt.agent_run_id
+    && result?.simulation === false && result.execution?.writable === false && result.process_tree_stopped === true
+    && typeof before === 'string' && before.length > 0 && before === result.repository_after?.fingerprint;
+}
+
+function writeGeneration(task) {
+  const currentCycle = cycle(task);
+  let generation = 0;
+  for (const attempt of task.operations.values()) {
+    if (attempt.simulation === false && attempt.cycle === currentCycle && !verifiedReadOnly(attempt)) generation++;
+  }
+  return generation;
+}
+
 export class HostRuntime {
   #providers; #manifest; #tasks = new Map(); #starting = new Set(); #audit = new AuditLog(); #discovery; #closed = false; #inflight = 0;
   static async create({ providers, requiredCapabilities = [], discovery = discover }) {
@@ -87,6 +104,22 @@ export class HostRuntime {
   }
   #adapter(task, context) {
     return new CodexAdapter({ controller: task.controller, actor: context.principal, discovery: this.#discovery });
+  }
+  async #verifyReviewArtifact(task, context, ref) {
+    const artifact = await this.#providers.evidence.verify(ref, { task_id: task.id });
+    this.#unchanged(task, context);
+    const attempt = task.operations.get(artifact.operation_id);
+    const snapshots = [task.controller.snapshot.discovery?.fingerprint,
+      attempt?.result?.repository_before?.fingerprint, attempt?.result?.repository_after?.fingerprint];
+    requireRuntime(attempt?.cycle === cycle(task)
+      && (attempt.evidence_refs ?? [attempt.evidence_ref]).some(item => item?.artifact_ref === artifact.artifact_ref)
+      && snapshots.includes(artifact.repository_snapshot.fingerprint),
+    'INVALID_EVIDENCE', 'Evidence must come from a recorded operation in this execution cycle and Discovery');
+    if (artifact.type === 'TEST_RUN' && artifact.simulation === false && artifact.status === 'pass') {
+      requireRuntime(verifiedReadOnly(attempt) && attempt.test_write_generation === writeGeneration(task),
+        'INVALID_EVIDENCE', 'Passing test evidence must verify the current write generation; run tests after the last possible write');
+    }
+    return artifact;
   }
   async #reconcileExternalWork(task) {
     for (const [id, run] of task.runs) if (requiresAgentReconciliation(run)) {
@@ -291,7 +324,7 @@ export class HostRuntime {
         const refs = payload.input.evidence_refs;
         requireRuntime(Array.isArray(refs) && refs.length > 0, 'INVALID_EVIDENCE', 'Real review requires verified evidence references');
         const artifacts = [];
-        for (const ref of refs) artifacts.push(await this.#providers.evidence.verify(ref, { task_id: task.id }));
+        for (const ref of refs) artifacts.push(await this.#verifyReviewArtifact(task, context, ref));
         requireRuntime(artifacts.every(artifact => artifact.simulation === false), 'INVALID_EVIDENCE', 'Real review cannot rely on simulated artifacts');
         if (payload.review_level === 'R3') requireRuntime(artifacts.some(a => a.type === 'DIFF') && artifacts.some(a => a.type === 'TEST_RUN'),
           'INVALID_EVIDENCE', 'Independent R3 requires real diff and test artifacts');
@@ -304,7 +337,8 @@ export class HostRuntime {
         }
         const latestSnapshot = [...task.operations.values()].map(operation => operation.result?.repository_after).filter(Boolean).at(-1)
           ?? task.controller.snapshot.discovery;
-        agentInput = { decision: task.approval.decision, specification: task.controller.specification, report: task.controller.snapshot.report,
+        agentInput = { decision: task.approval.decision, approval: task.approval.approval, delegation: task.controller.delegation,
+          specification: task.controller.specification, report: task.controller.snapshot.report,
           repository_snapshot: latestSnapshot, artifacts };
       }
       const agentSimulation = this.#manifest.provider_capabilities.agent.simulation;
@@ -373,14 +407,15 @@ export class HostRuntime {
       task.lease = await this.#providers.workspace.renewLease(task.lease.lease_id); this.#unchanged(task, context);
       const adapter = this.#adapter(task, context);
       return adapter.execute(payload.operation_id, async operation => {
-        const attempt = { attempt_id: payload.attempt_id, operation_id: operation.id, context, cycle: cycle(task), phase: 'RUNNING', outcome: null, result: null, evidence_ref: null, simulation: this.#manifest.provider_capabilities.tool.simulation };
+        const attempt = { attempt_id: payload.attempt_id, operation_id: operation.id, context, cycle: cycle(task), phase: 'RUNNING', outcome: null, result: null, evidence_ref: null, simulation: this.#manifest.provider_capabilities.tool.simulation,
+          ...(payload.agent_run_id ? { agent_run_id: payload.agent_run_id } : {}) };
         if (typeof this.#providers.tool.describeAttempt === 'function') attempt.execution_binding = jsonCopy(await this.#providers.tool.describeAttempt({ task_id: task.id, attempt_id: payload.attempt_id, workspace: task.workspace }));
         this.#unchanged(task, context);
         task.operations.set(payload.attempt_id, jsonCopy(attempt));
         task.active = { provider: this.#providers.tool, id: payload.attempt_id };
         let result;
         try {
-          // Commit the attempted-operation identity before the external side effect.
+          // Commit the attempt before execution. Until proven read-only it counts as a possible write.
           await this.#save(task); this.#unchanged(task, context);
           let agent_input;
           if (payload.agent_run_id) {
@@ -398,7 +433,8 @@ export class HostRuntime {
             policy: { cwd: task.workspace.repository_identity, filesystem_allowlist: operation.paths, environment_allowlist: [], network: 'deny',
               tool_allowlist: [operation.id], timeout_ms: 30000, output_limit_bytes: 1048576, resources: { cpu_ms: 30000, memory_bytes: 268435456, file_size_bytes: 1048576 }, enforced: this.#manifest.capabilities.os_sandbox },
             simulation: this.#manifest.provider_capabilities.tool.simulation }), { allowReal: !this.#manifest.provider_capabilities.tool.simulation });
-          task.operations.set(payload.attempt_id, jsonCopy({ ...attempt, phase: 'FINISHED', outcome: result.outcome, result }));
+          const finished = { ...attempt, phase: 'FINISHED', outcome: result.outcome, result };
+          task.operations.set(payload.attempt_id, jsonCopy(finished));
           this.#unchanged(task, context);
           if (result.outcome !== 'SUCCEEDED') {
             task.controller.block(context.principal, 'REPOSITORY_FAILURE', `Tool outcome ${result.outcome}; rediscover before any further execution`, [payload.attempt_id]);
@@ -411,8 +447,10 @@ export class HostRuntime {
             repository_snapshot, producer: result.simulation ? 'fake-tool-runner' : 'process-tool-runner', principal: context.principal,
             status: 'pass', content: JSON.stringify(type === 'DIFF' ? result.file_delta : result), simulation: result.simulation });
           this.#unchanged(task, context);
-          task.operations.set(payload.attempt_id, jsonCopy({ ...attempt, phase: 'FINISHED', outcome: result.outcome, result, evidence_ref, evidence_refs: [evidence_ref],
-            ...(payload.agent_run_id ? { agent_run_id: payload.agent_run_id } : {}) }));
+          const testBinding = type === 'TEST_RUN' && verifiedReadOnly(finished)
+            ? { test_write_generation: writeGeneration(task) }
+            : {};
+          task.operations.set(payload.attempt_id, jsonCopy({ ...finished, ...testBinding, evidence_ref, evidence_refs: [evidence_ref] }));
           return { ...result, evidence_ref };
         } catch (error) {
           if (!result) task.operations.set(payload.attempt_id, jsonCopy({ ...attempt, phase: 'FINISHED', outcome: 'EFFECT_UNKNOWN', error_code: error.code ?? 'TOOL_FAILED' }));
@@ -428,12 +466,7 @@ export class HostRuntime {
       requireRuntime(Array.isArray(payload.evidence_refs), 'INVALID_EVIDENCE', 'Explicit evidence_refs required');
       const validated = new Set();
       for (const ref of payload.evidence_refs) {
-        const artifact = await this.#providers.evidence.verify(ref, { task_id: task.id }); this.#unchanged(task, context);
-        const attempt = task.operations.get(artifact.operation_id);
-        const snapshots = [task.controller.snapshot.discovery?.fingerprint, attempt?.result?.repository_before?.fingerprint, attempt?.result?.repository_after?.fingerprint];
-        requireRuntime(attempt?.cycle === cycle(task) && (attempt.evidence_refs ?? [attempt.evidence_ref]).some(item => item?.artifact_ref === artifact.artifact_ref)
-          && snapshots.includes(artifact.repository_snapshot.fingerprint),
-        'INVALID_EVIDENCE', 'Evidence must come from a recorded operation in this execution cycle and Discovery');
+        const artifact = await this.#verifyReviewArtifact(task, context, ref);
         if (payload.review.decision === 'APPROVE') requireRuntime(artifact.status === 'pass', 'INVALID_EVIDENCE', 'Unknown/failed evidence cannot support APPROVE');
         validated.add(artifact.artifact_ref);
       }

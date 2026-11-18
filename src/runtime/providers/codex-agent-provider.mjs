@@ -22,6 +22,18 @@ export function openAIOutputSchema(value) {
   return result;
 }
 const schemaFor = name => openAIOutputSchema(CONTRACT.$defs[name]);
+
+export function reviewOutputSchema(artifacts) {
+  const schema = schemaFor('ReviewResult');
+  if (!Array.isArray(artifacts) || artifacts.length === 0) return schema;
+
+  const refs = [...new Set(artifacts.map(artifact => nonempty(artifact?.artifact_ref, 'artifact_ref')))];
+  const evidenceItem = { type: 'string', enum: refs };
+  schema.properties.evidence.items = evidenceItem;
+  schema.properties.requirements.items.properties.evidence.items = evidenceItem;
+  return schema;
+}
+
 const changeSchema = { type: 'array', minItems: 1, maxItems: 100, items: { type: 'object', additionalProperties: false,
   properties: { path: { type: 'string', minLength: 1 }, content: { type: 'string' } }, required: ['path', 'content'] } };
 
@@ -51,7 +63,8 @@ export class CodexAgentProvider extends AgentProvider {
     const request = jsonCopy(input); validateContext(request.context); nonempty(request.run_id, 'run_id'); nonempty(request.template_version, 'template_version');
     requireRuntime(!this.#runs.has(request.run_id), 'RUN_ALREADY_EXISTS', 'Run ID cannot be reused');
     const outputName = kind === 'deliberate' ? 'Proposal' : kind === 'implement' ? 'ImplementationReport' : 'ReviewResult';
-    const outputSchema = { type: 'object', additionalProperties: false, properties: { output: schemaFor(outputName),
+    const output = kind === 'review' ? reviewOutputSchema(request.input?.artifacts) : schemaFor(outputName);
+    const outputSchema = { type: 'object', additionalProperties: false, properties: { output,
       ...(kind === 'implement' ? { file_changes: changeSchema } : {}) }, required: kind === 'implement' ? ['output', 'file_changes'] : ['output'] };
     const started = Date.now();
     const launched = this.#client.start({ runId: request.run_id, prompt: promptFor(kind, request), cwd: this.#cwd,

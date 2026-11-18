@@ -34,7 +34,10 @@ export async function recoverController({ state, workspace, tool, agent, taskId,
   const lease = journal.controller.state === 'DONE' ? null : await workspace.acquireLease(bound.repository_identity, taskId, 'write');
   const runs = new Map();
   for (const run of data.agent_runs) {
-    if (!requiresAgentReconciliation(run)) { runs.set(run.run_id, run); continue; }
+    if (!requiresAgentReconciliation(run) && !(run.simulation === true && run.status === 'RUNNING')) {
+      runs.set(run.run_id, run);
+      continue;
+    }
     let reconciliation = { stopped: true, reason: 'simulated_host_restart' };
     if (run.simulation === false) {
       requireRuntime(typeof agent.reconcile === 'function', 'RECONCILIATION_REQUIRED', 'Real Agent provider must reconcile unfinished runs');

@@ -37,3 +37,44 @@
 ## 协议结论
 
 两条路径都故意停在 `HUMAN_ACCEPTANCE`。测试代码不会把 fixture 或 Agent 输出冒充真实 Human 接受；设置 `CCCP_HUMAN_ACCEPT=1` 也只会在取得真实 Human 明示批准后执行既有 `acceptTask`。M4 的最后 DONE 只能在独立审查者检查本报告、全量测试和源码审计并给出结论后，由 Human 显式批准。运行时 R3 已在两条 E2E 内完成；最终独立源码审查尚未执行。
+
+## 2026-11-16 修订后复测
+
+复测基线是 `a8e5ab5` 加上本次 M4 收尾改动。环境为 Windows、Node.js 24.19.0、Codex CLI 0.155.1、Docker Linux Engine 29.8.0，继续使用上文的固定镜像。审查端通过 ChatGPT 登录运行。
+
+- 最终本地串行回归 194 通过、0 失败、10 个外部测试跳过，Schema/state 检查 9 项通过。与真实 E2E 同时运行的一次本地回归遇到 Windows 临时 Git index `Permission denied`，两组测试分开执行后复测通过。单独启用 Docker 的测试组 8/8 通过。
+- 显式使用历史模型 `gpt-5.5` 时，恢复用例收到 `model_not_found`。取消模型覆盖后，正常路径完成实施与两项工具操作，但 R3 在约五分钟后被中断。Host 以 `RECONCILIATION_REQUIRED` 保留租约。
+- 使用本机模型配置的恢复路径 75.4 秒通过。重启后工具操作数仍为 2，独立 R3 给出 `APPROVE`，状态达到 `HUMAN_ACCEPTANCE`。
+- 正常路径改用 `gpt-6-luna` 做 Reviewer 后，Controller 进入 `REVISION`。从该次 Codex 运行记录取回的审查意见指出，应用前的候选报告称未编辑文件，与应用后的 DIFF 矛盾，而且仅靠两个操作 Artifact 无法核对 Human 授权。正常与恢复 fixture 现都从 Docker 的真实结果补齐最终报告，Host 在真实 Review 输入中提供 Controller 保存的审批记录与 Delegation。E2E 在状态断言前导出审查结果。
+
+- 修订后的两条用例在同一次运行中通过。实施使用本机 Codex 模型配置，审查显式使用 `gpt-6-luna`。正常路径用时 85.7 秒，强制崩溃恢复用时 111.9 秒。两次运行均执行了 2 项工具操作并到达 `HUMAN_ACCEPTANCE`，恢复用例确认没有重放工具副作用。
+
+修订后的 `normal.json` 和 `recovery.json` 由 `CCCP_E2E_AUDIT_DIR=.cccp/m4-audit-2026-11-16-final` 导出至本地。两份记录均复核 Artifact 哈希和引用、协议审计链及 Reviewer 独立性。上文的受版本控制附件对应九月的历史运行。
+
+最终源码 R3 复审与 Human Acceptance 待完成，见 [M4 R3 交接](M4_R3_HANDOFF.md)。
+
+## 2026-11-17 独立源码 R3 复审
+
+结论为 **REJECT**，完整证据见 [独立 R3 记录](audit/m4/independent-r3.txt)。复审对象为 `a8e5ab5` 加当前未提交 M4 修订。最新两份附件的 Artifact 哈希、引用归属、审计链及 reviewer 身份隔离独立复核通过，但 Host 探针复现了“同周期先测试后修改，旧测试仍可认证新实现并进入 HUMAN_ACCEPTANCE”的阻断缺陷。需要修复证据新鲜度校验并补回归，随后重新执行真实 E2E 和独立 R3；现有成功附件不覆盖该路径。
+
+本次实际本地回归为 190 PASS、4 FAIL、10 SKIP；四项失败均为 Windows 沙箱创建 symlink 的 EPERM，不能宣称全量通过。9 项 Schema/state 检查及 diff whitespace 检查通过。本次未重跑真实模型或 Docker opt-in E2E，未形成 Human Acceptance。
+
+## 2026-11-17 F1 修订后复测
+
+- Windows 宿主串行回归 198 通过、0 失败、10 个外部测试按配置跳过。四项 junction 用例在宿主均通过。Schema/state 检查 9 项通过。
+- 真实 Codex、固定 Docker 镜像与 `gpt-6-luna` Reviewer 的正常路径和强制崩溃恢复路径在同一次运行中 2/2 通过，分别用时 87.5 和 89.6 秒。两条路径均到达 `HUMAN_ACCEPTANCE`。恢复后操作数仍为 2，无工具重放。
+- 本地附件由 `CCCP_E2E_AUDIT_DIR=.cccp/m4-audit-2026-11-17-f1` 导出。复核 `normal.json` 和 `recovery.json` 的哈希、引用归属、审计链及 Reviewer 运行隔离均通过。两个附件均记录一次写入和一次只读测试，且测试的 `test_write_generation` 为 1。
+
+F1 修订及证据交下一轮 [独立源码 R3 复审](M4_R3_HANDOFF.md)。
+
+## 2026-11-17 F1 独立复审：APPROVE
+
+独立复审已关闭 F1，结论为 **APPROVE**，依据见 [独立 R3 记录的最新追加结论](audit/m4/independent-r3.txt)。Reviewer 实际运行宿主串行全量测试：198 PASS、0 FAIL、10 SKIP；Schema/state 9 项通过。额外受控探针确认先测试后写入、只读声明与前后指纹不符、可写测试均被新鲜度门禁拒绝。
+
+Reviewer 独立复核 `.cccp/m4-audit-2026-11-17-f1/` 两份附件的哈希、DIFF 内容、操作归属、测试代次、审计链及独立身份，均通过。本轮未重新调用真实模型或运行 Docker opt-in E2E。APPROVE 允许 M4 提交 Human Acceptance，不构成 Human 接受或 DONE。
+
+## 2026-11-17 Reviewer 证据枚举复测
+
+跳过项复测时，恢复路径的 Reviewer 在两个字段里漏抄了同一个 TEST_RUN 引用的两个字符。Host 返回 `INVALID_EVIDENCE`。修订后，Reviewer 调用的 Schema 从本次冻结输入生成完整引用枚举。27 项 provider 与持久化回归通过，DeepSeek API 探针 1/1 通过。
+
+正常和强制崩溃恢复 E2E 同次通过，分别用时 90.7 和 75.3 秒。两条路径均到达 `HUMAN_ACCEPTANCE`，恢复后操作数为 2。已核对正常路径 12 处和恢复路径 10 处 R3 引用均与冻结证据一致，两份附件的证据哈希和审计链均通过复核。最新本地附件位于 `.cccp/m4-audit-2026-11-17-evidence-enum/`。
