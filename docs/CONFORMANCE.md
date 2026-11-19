@@ -30,13 +30,13 @@
 | ID | 约束 | 证据 |
 |---|---|---|
 | C-01 | 不修改原始 Design Guide | 实现前后 SHA-256 相同，见实现报告 |
-| C-02 | 不自行改变冻结 Core / Authority / Boundary / Review 语义 | 本表、实现规范、控制器与 M4 E2E；本轮源码的最终独立 R3 审查待按 [M4 R3 交接](M4_R3_HANDOFF.md) 执行 |
+| C-02 | 不自行改变冻结 Core / Authority / Boundary / Review 语义 | 本表、实现规范、控制器、M4 E2E 与 [独立 R3 记录](audit/m4/independent-r3.txt) |
 | C-03 | Schema、目录和测试方式属于授权内部实现空间 | Human 原始任务明确允许；新增文件均位于工作目录 |
 | C-04 | 设计不能落地则 CHANGE_PROPOSAL / BLOCKED | 首版范围未发现必须改变 Guide 才能落地的冲突；运行时越权 / 不可继续路径有结构化输出 |
 
 ## 验证的实际边界
 
-自动测试验证可执行规则，不能证明任意自然语言 Decision 与任意代码修改语义等价。M4 已以真实宿主完成独立 R3 provider、Docker 工具、Evidence 和跨进程恢复 E2E；证据见 [M4 E2E 报告](M4_E2E_REPORT.md)。对本轮整体设计和实现的独立源码审查仍待按 [M4 R3 交接](M4_R3_HANDOFF.md) 执行。
+自动测试覆盖可执行规则。自然语言 Decision 与实现的语义一致性需要结合证据审查。M4 的真实运行证据以及源码复审范围分别见 [M4 E2E 报告](M4_E2E_REPORT.md) 和 [M4 R3 交接](M4_R3_HANDOFF.md)。
 
 ## 后续回归证据
 

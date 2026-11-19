@@ -22,6 +22,6 @@ export async function capabilityManifest(providers, requiredCapabilities = []) {
   if (capabilities.crash_recovery) requireRuntime(['recover', 'acquireTask', 'pending'].every(method => typeof providers.state[method] === 'function'), 'INVALID_PROVIDER', 'Recovery methods required');
   if (capabilities.os_sandbox) requireRuntime(['describeAttempt', 'reconcile'].every(method => typeof providers.tool[method] === 'function'), 'INVALID_PROVIDER', 'Real tools must persist execution identity and reconcile orphaned processes');
   requireRuntime(requiredCapabilities.every(k => Object.hasOwn(capabilities, k) && capabilities[k] === true), 'UNSUPPORTED_CAPABILITY', 'Required capability is unknown or unavailable');
-  return immutable({ protocol_versions: ['1.0'], runtime_version: '0.2.0-dev', contract_version: RUNTIME_CONTRACT_VERSION,
+  return immutable({ protocol_versions: ['1.0'], runtime_version: '0.2.0', contract_version: RUNTIME_CONTRACT_VERSION,
     storage_schema_version: durable ? 'sqlite-1' : 'memory-1', simulation: pc.agent.simulation || pc.tool.simulation, capabilities, provider_capabilities });
 }

@@ -28,7 +28,11 @@ App Server Structured Outputs 使用从协议 Schema 派生的兼容视图；运
 
 真实应用操作生成 DIFF Artifact，真实测试操作生成 TEST_RUN Artifact。Artifact 绑定 task、attempt、principal、执行后 repository snapshot、内容 hash 和不可混淆的 artifact reference。自然语言、裸 hash、文件路径或命令文字不能代替 reference。
 
-真实 Review input 由 Host 重建，不信任调用者提交的任意上下文。APPROVE 时，Review 和逐条 RequirementEvidence 只能引用输入 Artifact。R3 还要求同一执行周期至少一个真实 DIFF 与一个真实 TEST_RUN，并要求提交的 Review 与已完成的独立真实 run 输出逐字一致。
+真实 Review input 由 Host 重建，包含冻结的 Human Decision 审批记录和 Delegation，供审查者核对授权范围。派发前和提交时都校验证据的任务归属、已记录操作、执行周期和快照。APPROVE 时，Review 和逐条 RequirementEvidence 只能引用输入 Artifact。R3 还要求同一执行周期至少一个真实 DIFF 与一个真实 TEST_RUN，并要求提交的 Review 与已完成的独立真实 run 输出一致。
+
+Reviewer 的输出 Schema 根据本次冻结 Artifact 生成完整 `artifact_ref` 枚举，约束顶层 `evidence` 和 `requirements[].evidence`。Host 仍逐字校验返回引用和冻结输入的匹配。
+
+真实通过测试的证据还绑定本执行周期的写入代次。Host 在工具运行前持久化 attempt，并按已记录的可能写入计算代次。只有确认进程树已停止、只读且前后同范围指纹一致的成功操作才不增加代次。符合条件的 `TEST_RUN` 在 attempt 上保存 `test_write_generation`。派发或提交 Review 时，旧代次或缺少绑定的通过测试证据会被拒绝。未知副作用按可能写入处理。恢复从持久化 attempt 重建代次。不同工具的挂载范围可以不同，无需比较跨操作指纹。
 
 Host 只接受通过全部本地校验、明确记录 `accepted=true` 且绑定当前执行周期的 Agent run。Human Stop 后的迟到结果、Schema/证据校验失败结果以及其他被拒绝的候选不能再作为工具输入或 Review 来源。R3 提交的 Artifact 集合必须与该 run 的冻结输入一致。
 
@@ -42,7 +46,7 @@ Human Stop 先由 Controller 记录，再异步中断活动 turn/response。取�
 
 ## 配置
 
-- `CCCP_CODEX_MODEL`：实施端模型；当前本机验收使用 `gpt-5.5`。
+- `CCCP_CODEX_MODEL`：指定实施端模型。未设置时使用本机 Codex 的模型配置。历史测试报告中的模型仅记录当时的环境。
 - `CCCP_REVIEW_MODEL`：独立审查模型；未设置时跟随实施端配置。
 - `OPENAI_API_KEY`：仅在显式选择 Responses review 后端时需要。
 - `DEEPSEEK_API_KEY`：设置后真实 E2E 优先使用 DeepSeek Responses review 后端，以降低开发期 Review 成本。

@@ -7,7 +7,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { requirements } from '../src/index.mjs';
-import { realAgentHost, operations } from './fixtures/real-agent-host.mjs';
+import { appliedFixtureReport, realAgentHost, operations } from './fixtures/real-agent-host.mjs';
 import { codex } from '../examples/fixtures.mjs';
 
 const enabled = process.env.CCCP_REAL_AGENT_TESTS === '1';
@@ -24,7 +24,8 @@ async function writeAuditFixture(name, fixture, observed, refs) {
   const value = { audit_format: 'cccp-m4-e2e-v1', scenario: name, captured_at: new Date().toISOString(), task_id: fixture.context.task_id,
     state: observed.snapshot.state, repository_snapshot: observed.snapshot.discovery, operation_count: observed.result.operations.length,
     operations: observed.result.operations.map(operation => ({ attempt_id: operation.attempt_id, operation_id: operation.operation_id,
-      outcome: operation.outcome, evidence_ref: operation.evidence_ref, agent_run_id: operation.agent_run_id ?? null })),
+      outcome: operation.outcome, evidence_ref: operation.evidence_ref, agent_run_id: operation.agent_run_id ?? null,
+      writable: operation.result?.execution?.writable ?? null, test_write_generation: operation.test_write_generation ?? null })),
     artifacts, agent_runs, protocol_audit: observed.result.protocol_audit };
   await mkdir(directory, { recursive: true });
   await writeFile(join(directory, `${name}.json`), `${JSON.stringify(value, null, 2)}\n`);
@@ -46,7 +47,7 @@ async function evidenceReview(host, specification, reportId, level, refs) {
     reason: 'Host verified the recorded real diff and test artifacts.' }, evidence_refs: refs });
 }
 
-test('real Codex implementation and independent configured R3 reach Human Acceptance', real, async () => {
+test('real Codex implementation and independent configured R3 reach Human Acceptance', real, async t => {
   const directory = await mkdtemp(join(tmpdir(), 'cccp-m4-real-'));
   let fixture;
   try {
@@ -57,27 +58,30 @@ test('real Codex implementation and independent configured R3 reach Human Accept
     const applied = await fixture.call('executeTool', 'codex', { operation_id: 'apply-agent-change', attempt_id: 'apply-1', agent_run_id: 'real-implementation' }, 'apply-1');
     const tested = await fixture.call('executeTool', 'codex', { operation_id: 'run-fixture-tests', attempt_id: 'test-1' }, 'test-1');
     const refs = [applied.result.evidence_ref, tested.result.evidence_ref];
-    const report = { ...implementation.result.output, evidence: refs.map(ref => ref.artifact_ref) };
+    const report = appliedFixtureReport(implementation.result.output, applied.result, tested.result);
     await fixture.call('submitReport', 'codex', report);
     await evidenceReview(fixture, fixture.specification, report.id, 'R1', refs);
     await evidenceReview(fixture, fixture.specification, report.id, 'R2', refs);
     await fixture.call('routeReview', 'codex'); await independentReview(fixture, refs);
     const observed = await fixture.call('inspectTask', 'human');
+    await writeAuditFixture('normal', fixture, observed, refs);
     assert.equal(observed.snapshot.state, 'HUMAN_ACCEPTANCE'); assert.equal(await readFile(join(fixture.workspace, 'src', 'value.txt'), 'utf8'), 'ready\n');
     assert.equal(observed.result.agent_runs.filter(run => run.kind === 'review' && run.review_level === 'R3').length, 1);
     assert.ok(requirements(fixture.specification).length > 0);
-    await writeAuditFixture('normal', fixture, observed, refs);
     if (process.env.CCCP_HUMAN_ACCEPT === '1') {
       const accepted = await fixture.call('acceptTask', 'human', { reason: process.env.CCCP_HUMAN_ACCEPT_REASON ?? 'Human accepted the M4 evidence.' });
       assert.equal(accepted.snapshot.state, 'DONE');
     }
+  } catch (error) {
+    t.diagnostic(error.stack);
+    throw error;
   } finally {
-    if (fixture) { await fixture.host.close(); fixture.database.close(); }
+    if (fixture) { try { await fixture.host.close(); } finally { fixture.database.close(); } }
     try { await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch {}
   }
 });
 
-test('forced Host crash after real tools recovers without replay and completes independent R3', real, async () => {
+test('forced Host crash after real tools recovers without replay and completes independent R3', real, async t => {
   const directory = await mkdtemp(join(tmpdir(), 'cccp-m4-recovery-'));
   let fixture;
   try {
@@ -92,15 +96,18 @@ test('forced Host crash after real tools recovers without replay and completes i
     await evidenceReview(fixture, fixture.specification, reportId, 'R2', refs);
     await fixture.call('routeReview', 'codex'); await independentReview(fixture, refs);
     observed = await fixture.call('inspectTask', 'human');
+    await writeAuditFixture('recovery', fixture, observed, refs);
     assert.equal(observed.snapshot.state, 'HUMAN_ACCEPTANCE'); assert.equal(observed.result.operations.length, 2);
     assert.equal(await readFile(join(fixture.workspace, 'src', 'value.txt'), 'utf8'), 'ready\n');
-    await writeAuditFixture('recovery', fixture, observed, refs);
     if (process.env.CCCP_HUMAN_ACCEPT === '1') {
       observed = await fixture.call('acceptTask', 'human', { reason: process.env.CCCP_HUMAN_ACCEPT_REASON ?? 'Human accepted the M4 recovery evidence.' });
       assert.equal(observed.snapshot.state, 'DONE');
     }
+  } catch (error) {
+    t.diagnostic(error.stack);
+    throw error;
   } finally {
-    if (fixture) { await fixture.host.close(); fixture.database.close(); }
+    if (fixture) { try { await fixture.host.close(); } finally { fixture.database.close(); } }
     try { await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch {}
   }
 });

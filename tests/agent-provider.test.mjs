@@ -14,6 +14,18 @@ const report = { id: 'report', specification_id: 'spec', discovery_fingerprint: 
   unexpected_deviations: [], risk: 'low', triggers: [] };
 const review = { id: 'review', report_id: 'report', review_level: 'R3', reviewer: chatgpt, decision: 'APPROVE', confidence: 0.9, findings: [], evidence: ['evidence:1:hash'],
   failed_requirements: [], requirements: [], implementation_status: 'pass', specification_compliance: 'pass', architecture_compliance: 'pass', boundary_violation: false, reason: 'verified' };
+const testRef = 'evidence:5d958ba2-6739-409a-b11e-434727d91207:f7dbbf0a2e53e79bd6868a79294cec826d2e4aa557a0ae7411a30a0b2f2008fa';
+const frozenRefs = [review.evidence[0], testRef];
+const frozenInput = { artifacts: frozenRefs.map(artifact_ref => ({ artifact_ref })) };
+
+function assertEvidenceEnum(schema, refs) {
+  const evidence = schema.properties.evidence.items;
+  const requirementEvidence = schema.properties.requirements.items.properties.evidence.items;
+  for (const item of [evidence, requirementEvidence]) {
+    assert.deepEqual(item.enum, refs);
+    assert.ok(!item.enum.includes(testRef.replace('a30a0b2f', 'a30a2f')));
+  }
+}
 
 test('Codex real provider binds structured output and bounded file changes', async () => {
   let started;
@@ -57,20 +69,25 @@ test('DIFF evidence records actual before/after content and rejects unapplied ca
 });
 
 test('ChatGPT review provider is independent and exposes no implementation route', async () => {
-  const client = { start(options) { return { binding: { backend: 'codex-app-server', pid: 43, run_id: options.runId }, result: Promise.resolve({
+  const schemas = [];
+  const client = { start(options) { schemas.push(options.outputSchema.properties.output); return { binding: { backend: 'codex-app-server', pid: 43, run_id: options.runId }, result: Promise.resolve({
     output: { output: review }, thread_id: 'review-thread', turn_id: 'review-turn' }) }; }, cancel: async () => true, inspect: () => null };
   const provider = new ChatGPTReviewProvider({ client, cwd: process.cwd(), model: 'review-model' });
   assert.equal((await provider.capabilities()).independent_review, true);
-  const run = await provider.review(base(chatgpt, { review_level: 'R3', output_schema: 'ReviewResult', allowed_tools: [] }));
+  const run = await provider.review(base(chatgpt, { input: frozenInput, review_level: 'R3', output_schema: 'ReviewResult', allowed_tools: [] }));
   assert.deepEqual(run.output, review); await assert.rejects(provider.implement(base(codex)));
+  await provider.review(base(chatgpt, { run_id: 'new-review', input: { artifacts: [{ artifact_ref: review.evidence[0] }] }, review_level: 'R3' }));
+  assertEvidenceEnum(schemas[0], frozenRefs);
+  assertEvidenceEnum(schemas[1], [review.evidence[0]]);
 });
 
 test('OpenAI review provider uses a stored background response and preserves remote id', async () => {
   let request;
   const fetchImpl = async (url, options = {}) => { request = { url, options }; return { ok: true, status: 200, json: async () => ({ id: 'resp_1', status: 'completed', model: 'review-model', output_text: JSON.stringify(review), usage: { input_tokens: 1, output_tokens: 1 } }) }; };
   const provider = new OpenAIReviewProvider({ apiKey: 'test-key', model: 'review-model', fetchImpl, pollMs: 0 });
-  const run = await provider.review(base(chatgpt, { review_level: 'R3', output_schema: 'ReviewResult', allowed_tools: [] }));
+  const run = await provider.review(base(chatgpt, { input: frozenInput, review_level: 'R3', output_schema: 'ReviewResult', allowed_tools: [] }));
   const body = JSON.parse(request.options.body); assert.equal(body.background, true); assert.equal(body.store, true); assert.equal(body.metadata.cccp_run_id, 'run');
+  assertEvidenceEnum(body.text.format.schema, frozenRefs);
   assert.equal(run.execution_binding.response_id, 'resp_1'); assert.equal(run.simulation, false);
 });
 
@@ -97,9 +114,10 @@ test('DeepSeek review provider uses the Responses wire format without claiming O
   }) }; };
   const provider = new DeepSeekReviewProvider({ apiKey: 'test-key', model: 'deepseek-flash', fetchImpl, pollMs: 0 });
   const capabilities = await provider.capabilities();
-  const run = await provider.review(base(chatgpt, { review_level: 'R3', output_schema: 'ReviewResult', allowed_tools: [] }));
+  const run = await provider.review(base(chatgpt, { input: frozenInput, review_level: 'R3', output_schema: 'ReviewResult', allowed_tools: [] }));
   assert.equal(request.url, 'https://api.deepseek.com/responses');
   const body = JSON.parse(request.options.body);
+  assertEvidenceEnum(body.text.format.schema, frozenRefs);
   assert.equal(body.background, undefined); assert.equal(body.store, undefined); assert.equal(body.metadata, undefined);
   assert.equal(capabilities.backend, 'deepseek-responses'); assert.equal(capabilities.independent_review, true);
   assert.equal(capabilities.recovery, false); assert.equal(capabilities.cancellation, false);

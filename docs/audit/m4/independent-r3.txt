@@ -1,0 +1,61 @@
+REJECT
+
+2026-11-17 独立 R3 Architecture Review
+审查基线：a8e5ab5ba07baad00903d779afe7cff01eed5541 加审查开始时的 11 个未提交文件；不是仅审查 HEAD。未修改源码或测试。本记录及两份日志的追加不属于被审实现。
+范围：M4、其 Runtime 改动、交接所列材料，以及 .cccp/m4-audit-2026-11-16-final/ 的正常/恢复附件；M5 不作为拒绝理由。
+
+F1 [P1，阻断] 同一执行周期内，修改前的测试仍能认证修改后的实现。
+位置：src/runtime/host-runtime.mjs:91-101、306-321、444-460。
+原因：#verifyReviewArtifact 只验证当前 cycle、操作记录中的引用，以及 Artifact fingerprint 是否属于它自己的操作 before/after 或 Discovery；没有验证该测试执行后是否发生新的相关写入。R3 只要求存在 DIFF 与 TEST_RUN，latestSnapshot 则独立取最后一个操作的 repository_after。提交时重复同样的归属检查与引用集合检查，不能弥补新鲜度缺口。
+影响：先运行通过的测试，再应用可能破坏行为的候选，仍可用旧测试支撑 R1/R2/R3；独立 reviewer 的 APPROVE 可以推进 HUMAN_ACCEPTANCE，而当前实现实际上没有对应的通过测试。这是证据与实现版本绑定缺陷，不是要求 Host 自动证明自然语言语义。
+独立复现：在内存中复用 tests/persistence.test.mjs:182 起的 routed provider fixture，调整工具顺序为 test -> apply -> extra，并使测试 repository_after.fingerprint=old、后续操作 fingerprint=new；两份 Artifact 均由 Host 正常存入 EvidenceStore，属于同一 task/cycle 和已记录操作。提交带原输入引用的 R3 APPROVE 后，实际输出为 {"testSnapshot":{"fingerprint":"old"},"reviewSnapshot":{"fingerprint":"new"},"accepted":true,"state":"HUMAN_ACCEPTANCE"}。此为受控 provider 的 Host 边界探针，不是真实 Docker/模型 E2E，也不声称真实 reviewer 必然批准。
+修复要求：在真实 Review 派发及提交前验证测试对应被审最终实现；可记录写入代次/测试覆盖范围，或使用统一且可比较的内容快照，在后续相关写入后使旧测试失效。effectSnapshot 当前按各工具 paths 计算（src/runtime/tools/effect-reconciler.mjs:12-44），不可简单比较不同范围的 fingerprint。补充 test -> apply、apply -> test -> later write 的拒绝回归，并重新执行正常/恢复 E2E 和独立 R3。
+
+逐项审查结果：
+1. Decision / Authority：本次 diff 未修改 Design Guide、协议 Schema 或 Core 生命周期。Host 由认证 principal 创建 Human 审批，Review 输入现在包括保存的 Decision、approval、Specification 与 Delegation（host-runtime.mjs:199-218、318-321；controller-journal.mjs:27）。没有将 Agent 输出作为 Human 批准。
+2. Delegation / 副作用边界：候选路径及大小验证、Delegation 与 Operation 双重路径限制存在（runtime/contracts.mjs:58；host-runtime.mjs:352-354、399-407）。App Server 请求只读 sandbox（codex-agent-provider.mjs:57-58；codex-app-server-client.mjs:40、50-51）。Docker 命令、镜像、挂载与环境来自 Host binding，候选经 stdin 传入（process-tool-runner.mjs:85-102、117-130、174-194）。该判断不扩展为完整生产 Threat Model 认证。
+3. Review：不同 principal/provider/run/thread 隔离、accepted=true/current cycle 和冻结引用集合门禁均存在（host-runtime.mjs:452-467）。真实 Review 输入的任务/操作归属修订有效，但 F1 说明执行周期相同不足以证明测试覆盖最终状态。
+4. Recovery：模拟 RUNNING run 现在标记 INTERRUPTED；真实未确认终态仍要求 reconcile（recovery-coordinator.mjs:36-49）。App Server reconcile 明确返回 stopped=false（codex-agent-provider.mjs:80-87）。当前 Host 的 resume/后续 tool dispatch 也检查未确认外部工作（host-runtime.mjs:103-118、266、384-385）。此前 rejected output、FAILED run 和未停止工具的门禁回归在本次执行中通过。
+5. Capability：real_agents 受非模拟 routed-agent 条件约束；independent_r3 另需 independent_review，route 验证方法面与不同 provider identity（capability-manifest.mjs:14-18；routed-agent-provider.mjs:12-24）。这些仍以 Host 安装的 provider 为可信边界。
+6. Human Acceptance：最新两份附件都止于 HUMAN_ACCEPTANCE，无 DONE。fixture 强制 human_acceptance=true（tests/fixtures/real-agent-host.mjs:40）；CCCP_HUMAN_ACCEPT 环境分支不是本次 Human 授权或验收证据。交接中“任何 DONE 只能 acceptTask”的全局说法须限定：冻结 Core 原本允许 profile 不要求验收时自动 DONE（src/lifecycle.mjs:155、162），并有 Human override（:221-224）；不是本次 M4 新增，也不应借此改写冻结协议。
+
+独立证据复核：
+- 对 docs/audit/m4/{normal,recovery}.json 以及最新 .cccp/m4-audit-2026-11-16-final/{normal,recovery}.json 共四份附件，分别重算 Artifact content SHA-256、evidence:<id>:<hash>，核对 task 与 operation 引用归属，并调用 AuditLog.verify 重算审计链：全部通过。
+- 每份均为 2 operations、DIFF + TEST_RUN、21 条协议审计记录；实施与 R3 的 provider_instance、principal.id、run_id、thread_id、turn_id 不同；R3 输出 APPROVE，状态 HUMAN_ACCEPTANCE。审计字段：state、operation_count、operations、artifacts、agent_runs、protocol_audit。
+- 附件证明所记录的成功路径内部一致，不能据此证明所有失败/重排路径；本次未重新调用真实模型或启用 Docker opt-in E2E。
+
+本次实际验证：
+- node --test --test-concurrency=1：204 tests，190 PASS、4 FAIL、10 SKIP。4 个失败位于 integration.test.mjs:109、125、161 及 workspace.test.mjs:52，均为创建 symlink 的 Windows 沙箱 EPERM，未到达被测安全断言；不是已证实的实现回归，也不能记为全量通过。
+- npm run check：9 schema/state artifacts 通过；git diff --check 通过，仅有 CRLF 提示。
+- F1 Host 探针成功复现；未改动仓库源码或测试。
+
+结论：F1 修复并通过相关回归、真实 E2E 与独立 R3 前，M4 不批准提交 Human Acceptance。本结论不形成 Human Acceptance 或 DONE。
+
+APPROVE
+
+2026-11-17 F1 修订后独立 R3 复审（本文件最新结论；保留上文历史 REJECT）
+基线：a8e5ab5ba07baad00903d779afe7cff01eed5541 加本轮当前未提交工作树。未修改源码或测试；本轮仅更新审查文档。范围仍为 M4，不扩展至 M5。
+
+F1 [已关闭]
+- src/runtime/host-runtime.mjs:28-43：verifiedReadOnly 同时要求操作成功完成、无 Agent 写入来源、真实执行、明确只读、进程树已停止，以及同操作前后 fingerprint 一致。writeGeneration 从当前 cycle 的持久化真实 attempts 计算；未知或未证明只读的操作按可能写入计数。
+- src/runtime/host-runtime.mjs:410-419、450-453：attempt 在执行前保存；只有符合上述条件的 TEST_RUN 才记录 test_write_generation。派发（:327）和提交（:469）共用 :108-123 校验，旧代次或缺失绑定均拒绝。没有把不同挂载范围的 fingerprint 直接比较。
+- src/runtime/recovery-coordinator.mjs:23-32：恢复保留 operation records，未完成尝试仍按未知效果处理；新鲜测试的代次可由既有操作重建，不因重启清零或重新执行工具。
+- tests/persistence.test.mjs:267-286 覆盖 test -> apply、apply -> test -> later-write、未知写入，并验证 R1/R2 提交、R3 派发与提交均拒绝；:289-308 验证最后一次写入后重测且恢复，可进入 HUMAN_ACCEPTANCE。上述回归本轮实际通过。
+- 额外独立探针：在内存中复用 fixture，分别执行原 test-before-apply 序列、追加 execution.writable=false 但前后 fingerprint 不同的操作，以及 writable=true 的测试。三者实际均以 INVALID_EVIDENCE/current write generation 拒绝旧测试。探针使用受控 provider，不冒充真实模型或 Docker E2E，也未改动源码。
+
+架构边界复核：
+1. Decision / Authority：冻结 Core、Design Guide 和 Schema 没有本次 diff；真实 Review 输入仍由 Host 提供 Decision、approval、Specification、Delegation（host-runtime.mjs:340-342）。Human acceptTask 仍受认证角色限制（:18-22、147、272-273）。交接已限定 M4 human_acceptance 配置，未要求改写 Core 既有自动 DONE 语义。
+2. Delegation / 安全：既有候选大小/路径校验、Delegation 与 Operation 限制、只读 App Server、Host 固定 Docker binding 和 stdin 数据通道没有被 F1 修订放宽。写入代次及只读证明取自 Host 持久操作和 ToolRunner 结果，模型不能提供该绑定。证据：host-runtime.mjs:373-375、422-435；runtime/contracts.mjs:58；process-tool-runner.mjs:85-102、117-130、174-194。
+3. Review：当前 cycle、accepted run、不可修改的 R3 输出、独立 principal/provider/run/thread 和冻结引用集合校验保留（host-runtime.mjs:477-492）。F1 的新鲜度门禁在派发与提交两端生效。
+4. Recovery：真实未确认终态 fail-closed、模拟 RUNNING 转 INTERRUPTED、Human Stop 后迟到输出拒绝，以及未停止工具的 reconciliation 门禁保持；相关回归通过。证据：recovery-coordinator.mjs:36-49；codex-agent-provider.mjs:80-87；host-runtime.mjs:124-139、287、405-406。
+5. Capability：real_agents/independent_r3 的非模拟 routed 装配与独立 identity 条件未被 F1 放宽（capability-manifest.mjs:14-18；routed-agent-provider.mjs:12-24）。
+6. Human Acceptance：最新正常/恢复附件 state 均为 HUMAN_ACCEPTANCE，未形成 DONE。本轮 APPROVE 仅允许提交 Human Acceptance；不调用 acceptTask，也不把 CCCP_HUMAN_ACCEPT 环境变量视为授权。
+
+独立验证结果：
+- 在审查沙箱首次全量：208 tests，193 PASS、5 FAIL、10 SKIP；四项 symlink EPERM，一项 Git index Permission denied。随后在宿主环境实际重跑同一命令 node --test --test-concurrency=1：208 tests，198 PASS、0 FAIL、10 SKIP，耗时约 11.3 秒。不是引用实现者的通过声明。
+- npm run check：9 schema/state artifacts 通过；git diff --check 通过，仅 CRLF 提示。
+- 对 .cccp/m4-audit-2026-11-17-f1/normal.json 与 recovery.json 独立重算 Artifact SHA-256/reference、task/operation 归属、DIFF 前后 base64 内容 hash 和协议审计链，并核对 R3 引用白名单及 principal/provider/run/thread/turn 隔离：全部通过。
+- 两份附件各 2 operations、21 条协议审计记录，写入后只读测试，test_write_generation=1；测试 exit_code=0、SUCCEEDED、process_tree_stopped=true，同操作前后快照相等。R3 为 APPROVE，最终 HUMAN_ACCEPTANCE。可核对字段：operations[].writable/test_write_generation、artifacts[].content/content_hash/artifact_ref、agent_runs、protocol_audit、state。
+- 本轮审查没有再次调用外部模型或启用 Docker opt-in E2E；真实运行依据是以上最新附件，独立检查的是其内容与一致性。默认测试跳过的 10 项不能记为本轮运行通过。
+
+最终结论：F1 关闭；本轮 M4 范围内无新的阻断发现，APPROVE。允许提交 Human Acceptance，不代表 Human 已接受、不推进 DONE，不构成 M5 或完整生产安全认证。

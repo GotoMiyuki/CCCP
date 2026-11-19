@@ -1,6 +1,6 @@
 # ADR 0004 — 真实 Agent、独立 R3 与证据绑定
 
-状态：M4 实现与真实 E2E 完成；本轮变更的最终独立 R3 审查已拆分为单独交接，尚未形成 Human Acceptance。对应 CCCP Protocol 1.0；不新增协议状态或权限。
+M4 实现与真实 E2E 已完成。当前源码复审和 Human Acceptance 进度见 [M4 R3 交接](../M4_R3_HANDOFF.md)。协议基线为 CCCP 1.0。
 
 ## 决策
 
@@ -20,4 +20,4 @@ App Server 后端复用本机可信 ChatGPT 登录；Responses 后端只从宿�
 
 ## 验收边界
 
-正常与恢复 E2E 都已实际调用独立 ChatGPT R3 provider，并在 `HUMAN_ACCEPTANCE` 停止。该运行时 R3 证明接线、身份隔离和证据绑定可用，不等同于对本轮源代码、ADR 和审计附件的独立设计审查。后者已明确移交，审查输入、核对项和可接受结论见 [M4 R3 交接](../M4_R3_HANDOFF.md)。在该审查和 Human 明示接受前，不得声称 M4 达到 `DONE`。
+正常与恢复 E2E 都实际调用了独立 ChatGPT R3 provider，并在 `HUMAN_ACCEPTANCE` 停止。源码 R3 另行核对实现和审计附件。本轮 M4 验收由 Human 根据源码复审和测试证据决定是否接受。[E2E 报告](../M4_E2E_REPORT.md) · [源码审查记录](../audit/m4/independent-r3.txt)
