@@ -4,7 +4,7 @@ M4 增加真实 Codex AgentProvider、独立 ChatGPT/OpenAI Review provider、�
 
 M3 的 ProcessToolRunner、GitWorkspaceManager、持久仓库租约和真实 Docker 验收已经完成，详见 [TOOL_RUNNER_SPEC.md](TOOL_RUNNER_SPEC.md)。
 
-M2 扩展已实现，见 [PERSISTENCE_SPEC.md](PERSISTENCE_SPEC.md) 和 [ADR 0002](adr/0002-durable-runtime.md)。下文 M1 能力限制与 RT-01～RT-10 保留为历史基线；装配 SQLite State/Evidence/Identity providers 时，Runtime contract 为 0.2、storage schema 为 sqlite-1，支持受验证的 recoverTask。内存装配仍明确拒绝 crash_recovery。真实 Agent 与独立 R3 Provider 的 M4 接线已实现；本轮源码和审计材料的最终独立 R3 审查另行进行，见 [M4 R3 交接](M4_R3_HANDOFF.md)。
+M2 扩展见 [PERSISTENCE_SPEC.md](PERSISTENCE_SPEC.md) 和 [ADR 0002](adr/0002-durable-runtime.md)。下文 M1 能力限制与 RT-01～RT-10 为历史基线。装配 SQLite State/Evidence/Identity providers 时，Runtime contract 为 0.2、storage schema 为 sqlite-1，支持受验证的 recoverTask。内存装配拒绝 crash_recovery。M4 审查和验收进度见 [M4 R3 交接](M4_R3_HANDOFF.md)。
 
 状态：Human 批准范围内的实现规范。对应 CCCP Protocol 1.0；Runtime contract 0.2；Runtime implementation 与包版本为 0.2.0。
 

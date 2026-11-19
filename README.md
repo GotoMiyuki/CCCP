@@ -60,7 +60,8 @@ Runtime 入口是 `HostRuntime.create({ providers, discovery? })`，通过 `src/
 | 条款与实现、测试对应关系 | [docs/CONFORMANCE.md](docs/CONFORMANCE.md) |
 | 本次实现与验证报告 | [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md) |
 | 后续加固与回归结果 | [docs/OPTIMIZATION_REPORT.md](docs/OPTIMIZATION_REPORT.md) |
-| v0.2.0 开发日志与验证结论 | [docs/development_logs/2026-09-20-v0.2.0-host-runtime.md](docs/development_logs/2026-09-20-v0.2.0-host-runtime.md) |
+| v0.2.0 开发总结、验证与验收状态 | [v0.2.0 开发总结](docs/development_logs/2026-11-19-v0.2.0-summary.md) |
+| 九月 Host Runtime 开发记录 | [v0.2.0 阶段日志](docs/development_logs/2026-09-20-v0.2.0-host-runtime.md) |
 | 对外导出 | `src/index.mjs` |
 | 机器可读产物 | `schemas/` |
 
@@ -70,8 +71,8 @@ Runtime 入口是 `HostRuntime.create({ providers, discovery? })`，通过 `src/
 
 Bridge 的会话、去重和审计保存在内存中；可导出审计记录，但未提供崩溃后重放。审计哈希可检测记录改动，不是外部签名。代码无法仅凭自然语言判断一个实现是否暗中改变架构，仍需依据真实证据执行 R2 / R3。
 
-独立 R3 的运行时机制已由两条真实 E2E 验证；**本次 M4 代码、文档和审计证据尚未获得最终独立 R3 审查**，该审查已拆分为单独交接，见 [M4 R3 交接](docs/M4_R3_HANDOFF.md)。
+正常与崩溃恢复 E2E 均已通过独立运行时 R3，达到 `HUMAN_ACCEPTANCE`。F1 修订已获源码独立 R3 批准，后续证据枚举改动已通过真实 E2E，仍待独立增量复核。M4 的 Human Acceptance 尚未记录。[M4 R3 交接](docs/M4_R3_HANDOFF.md)
 
-M0/M1 的历史基线与 Runtime contract/workflow 测试保留；当前完整回归结果及运行环境见 [v0.2.0 开发日志](docs/development_logs/2026-09-20-v0.2.0-host-runtime.md)。Runtime 与包版本均为 `0.2.0`，协议保持 `1.0`。
+Runtime 与包版本均为 `0.2.0`，协议版本为 `1.0`。本轮交付 M0–M4，M5 为后续加固阶段。[v0.2.0 开发总结](docs/development_logs/2026-11-19-v0.2.0-summary.md)
 
-M1 内存装配仍关闭 durable state/crash recovery。M2 可选 SQLite providers 使用内置 node:sqlite，要求 Node >=24.14，无新增 npm 包；凭证只存哈希。恢复通过既有 Controller 公共接口重放并验证审计，不接受请求上传的审批 snapshot。工具未知效果与不确定投递不自动重试。M3 Docker 后端和 M4 真实模型接线均已完成验收；最终独立代码审查与 Human Acceptance 仍待完成。
+M1 内存装配关闭 durable state/crash recovery。M2 可选 SQLite providers 使用内置 node:sqlite，要求 Node >=24.14，凭证只存哈希。恢复通过既有 Controller 公共接口重放并验证审计，拒绝请求上传的审批 snapshot。工具未知效果与不确定投递遵循原有恢复规则。

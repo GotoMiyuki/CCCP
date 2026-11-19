@@ -1,11 +1,12 @@
 # M4 Real E2E Audit Report
 
-日期：2026-09-17—18  
+首次运行日期为 2026-09-17—18。
+
 环境：Windows、Node.js 24.19.0、Codex CLI 0.154.0-alpha.6.2、Docker Desktop 4.91.0、Linux Engine 29.8.0  
 模型：`gpt-5.5`（通过现有 ChatGPT 登录）  
 镜像：`node@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81`
 
-本报告记录运行时 E2E 中实际执行的独立 R3 provider；它不替代对本轮 M4 源码和审计材料的最终独立 R3 审查。后者已拆分至下一对话，交接包见 [M4 R3 交接](M4_R3_HANDOFF.md)。
+以下先记录九月的初次验收，再按日期追加复测。独立源码审查的最新状态见 [M4 R3 交接](M4_R3_HANDOFF.md)。
 
 ## 正常路径
 
@@ -36,7 +37,7 @@
 
 ## 协议结论
 
-两条路径都故意停在 `HUMAN_ACCEPTANCE`。测试代码不会把 fixture 或 Agent 输出冒充真实 Human 接受；设置 `CCCP_HUMAN_ACCEPT=1` 也只会在取得真实 Human 明示批准后执行既有 `acceptTask`。M4 的最后 DONE 只能在独立审查者检查本报告、全量测试和源码审计并给出结论后，由 Human 显式批准。运行时 R3 已在两条 E2E 内完成；最终独立源码审查尚未执行。
+两条测试均在运行时 R3 后停在 `HUMAN_ACCEPTANCE`。测试的 `CCCP_HUMAN_ACCEPT=1` 分支会调用既有 `acceptTask`。上述试跑未启用该分支，M4 的 Human Acceptance 仍由 Human 根据独立源码审查和验证结果决定。
 
 ## 2026-11-16 修订后复测
 
@@ -77,4 +78,4 @@ Reviewer 独立复核 `.cccp/m4-audit-2026-11-17-f1/` 两份附件的哈希、DI
 
 跳过项复测时，恢复路径的 Reviewer 在两个字段里漏抄了同一个 TEST_RUN 引用的两个字符。Host 返回 `INVALID_EVIDENCE`。修订后，Reviewer 调用的 Schema 从本次冻结输入生成完整引用枚举。27 项 provider 与持久化回归通过，DeepSeek API 探针 1/1 通过。
 
-正常和强制崩溃恢复 E2E 同次通过，分别用时 90.7 和 75.3 秒。两条路径均到达 `HUMAN_ACCEPTANCE`，恢复后操作数为 2。已核对正常路径 12 处和恢复路径 10 处 R3 引用均与冻结证据一致，两份附件的证据哈希和审计链均通过复核。最新本地附件位于 `.cccp/m4-audit-2026-11-17-evidence-enum/`。
+正常和强制崩溃恢复 E2E 同次通过，分别用时 90.7 和 75.3 秒。两条路径均到达 `HUMAN_ACCEPTANCE`，恢复后操作数为 2。已核对正常路径 12 处和恢复路径 10 处 R3 引用均与冻结证据一致，两份附件的证据哈希和审计链均通过复核。最新附件位于由 Git 忽略的本地目录 `.cccp/m4-audit-2026-11-17-evidence-enum/`。仓库中 `docs/audit/m4/` 的 JSON 对应九月初次运行。

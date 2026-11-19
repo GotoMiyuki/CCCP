@@ -1,7 +1,8 @@
 # M4 最终独立 R3 审查交接
 
-状态：2026-11-17 独立 R3 因测试证据新鲜度问题 F1 给出 `REJECT`。当前工作树已加入 F1 修订，待独立复审。请在结论中注明审查的提交或工作树。参见 [独立 R3 记录](audit/m4/independent-r3.txt) 和 [M4 开发日志](development_logs/2026-09-17-host-runtime-m4.md)。
-最新状态：同日 F1 修订后独立复审为 `APPROVE`，F1 已关闭；M4 可提交 Human Acceptance，尚未形成 Human 接受或 DONE。复审对象为 `a8e5ab5` 加当前未提交修订，详见独立 R3 记录末尾。
+2026-11-17 独立 R3 最初因 F1 测试证据新鲜度问题给出 `REJECT`，同日复审给出 `APPROVE` 并关闭 F1。[独立 R3 记录](audit/m4/independent-r3.txt)
+
+当前实现基线为 `30fa4fc`，包含 F1 获批后增加的证据引用枚举。枚举改动已通过真实 E2E，待独立增量复核。请在复核结果中注明实际审查的提交。M4 Human Acceptance 尚未记录。[v0.2.0 开发总结](development_logs/2026-11-19-v0.2.0-summary.md)
 
 ## 审查目标
 
@@ -28,6 +29,7 @@
 7. 两条真实 E2E 都止于 `HUMAN_ACCEPTANCE`；`CCCP_HUMAN_ACCEPT=1` 的测试分支不构成 Human 授权或既有验收结论。
 8. 检查初次 Revision 的三项修订和本次收尾。真实 Review 在派发前和提交时使用同一 Artifact 归属与执行周期校验。恢复时，未完成的模拟 Agent 标为 `INTERRUPTED`，未确认停止的真实 Agent 仍要求对账。
 9. 核对 F1 的写入代次绑定。先测试再写入、测试后继续写入以及无法确认只读的操作会使早先的通过测试失效。最后一次写入后重新测试的证据在 Host 恢复后仍可用于 Review。回归见 `tests/persistence.test.mjs`。
+10. 复核证据枚举增量。检查顶层和逐条需求的引用枚举是否都取自本轮冻结输入，并核对 Host 的精确引用校验与两条真实 E2E。[枚举复测](M4_E2E_REPORT.md#2026-11-17-reviewer-证据枚举复测)
 
 ## 已有可复核结果
 
@@ -35,7 +37,8 @@
 - 恢复路径：工具和 report 后强制终止 Host；重启后 operation 数保持 2，不重复 apply/test，再完成独立 R3，到 `HUMAN_ACCEPTANCE`，110.2 秒通过。
 - Docker 单并发全量：200 tests，198 PASS，0 FAIL，2 个未启用 opt-in 的真实 Agent E2E SKIP；`npm run check` 通过 9 个 schema/state artifact；`git diff --check` 通过。
 - 2026-11-16 的 [修订后复测](M4_E2E_REPORT.md#2026-11-16-修订后复测) 记录了补齐最终报告及冻结授权记录后的两条真实 Agent E2E。
-- 2026-11-17 的 [F1 修订后复测](M4_E2E_REPORT.md#2026-11-17-f1-修订后复测) 记录了 Windows 宿主全量回归及两条真实 Agent E2E 同次通过。最新本地结构化附件位于 `.cccp/m4-audit-2026-11-17-f1/`。
+- 2026-11-17 的 F1 修订后复测记录了 Windows 宿主全量回归及两条真实 Agent E2E 同次通过。本地附件位于 `.cccp/m4-audit-2026-11-17-f1/`。[F1 复测](M4_E2E_REPORT.md#2026-11-17-f1-修订后复测)
+- 枚举修订后的本地附件位于 `.cccp/m4-audit-2026-11-17-evidence-enum/`，该目录由 Git 忽略。复跑命令所需的环境变量见 [Agent Provider 规范](AGENT_PROVIDER_SPEC.md#配置)。
 
 这些是待审查的证据，不是审查结论。
 
