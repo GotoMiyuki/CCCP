@@ -4,7 +4,7 @@ import { jsonCopy } from './contracts.mjs';
 import { requireRuntime } from './errors.mjs';
 import { requiresReconciliation } from './tools/effect-reconciler.mjs';
 
-const requiresAgentReconciliation = run => run.simulation === false && (run.status === 'RUNNING' || run.reconciliation_required === true
+export const requiresAgentReconciliation = run => run.simulation === false && (run.status === 'RUNNING' || run.reconciliation_required === true
   || ['FAILED', 'INTERRUPTED'].includes(run.status) && run.external_execution_stopped !== true);
 
 export async function recoverController({ state, workspace, tool, agent, taskId, context }) {

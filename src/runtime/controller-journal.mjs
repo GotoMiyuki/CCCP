@@ -6,7 +6,7 @@ import { executionSession } from '../execution-session.mjs';
 import { jsonCopy } from './contracts.mjs';
 import { requireRuntime } from './errors.mjs';
 
-const methods = ['observe', 'plan', 'begin', 'checkOperation', 'report', 'applyReview', 'route', 'accept', 'block', 'resume', 'override', 'requestReplan'];
+const methods = ['observe', 'plan', 'begin', 'checkOperation', 'report', 'applyReview', 'route', 'deferAcceptance', 'accept', 'block', 'resume', 'override', 'requestReplan'];
 // Optional undefined object fields are omitted exactly as for protocol JSON.
 const serializable = value => JSON.parse(JSON.stringify(value));
 

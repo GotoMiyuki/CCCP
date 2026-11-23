@@ -9,8 +9,8 @@ import { jsonCopy, nonempty, oneOf, record, validateFileChanges, validateRequest
 import { canonicalRepository } from './workspace/workspace-manager.mjs';
 import { requireRuntime, RuntimeError, unsupported } from './errors.mjs';
 import { controllerJournal } from './controller-journal.mjs';
-import { recoverController } from './recovery-coordinator.mjs';
-import { requiresReconciliation } from './tools/effect-reconciler.mjs';
+import { recoverController, requiresAgentReconciliation } from './recovery-coordinator.mjs';
+import { effectSnapshot, requiresReconciliation } from './tools/effect-reconciler.mjs';
 
 const hostActor = Object.freeze({ id: 'host-runtime', role: 'bridge' });
 const constructionKey = Symbol('validated providers');
@@ -18,12 +18,10 @@ const owners = new WeakSet();
 const roleFor = {
   startTask: ['human'], discoverTask: ['codex'], planTask: ['codex'], beginTask: ['codex'],
   executeTool: ['codex'], submitReport: ['codex'], submitReview: ['human', 'codex', 'chatgpt'],
-  routeReview: ['human', 'codex'], acceptTask: ['human'], stopTask: ['human'], resumeTask: ['human', 'codex'],
+  routeReview: ['human', 'codex'], acceptTask: ['human'], deferAcceptance: ['human'], stopTask: ['human'], resumeTask: ['human', 'codex'],
   dispatchAgent: ['human', 'codex', 'chatgpt'], inspectTask: ['human', 'codex', 'chatgpt'], recoverTask: ['human', 'codex'],
 };
 const cycle = task => `${task.controller.snapshot.decision_id}:${task.controller.snapshot.revision_count}`;
-const requiresAgentReconciliation = run => run.simulation === false && (run.status === 'RUNNING' || run.reconciliation_required === true
-  || ['FAILED', 'INTERRUPTED'].includes(run.status) && run.external_execution_stopped !== true);
 
 function verifiedReadOnly(attempt) {
   const result = attempt.result;
@@ -118,6 +116,12 @@ export class HostRuntime {
     if (artifact.type === 'TEST_RUN' && artifact.simulation === false && artifact.status === 'pass') {
       requireRuntime(verifiedReadOnly(attempt) && attempt.test_write_generation === writeGeneration(task),
         'INVALID_EVIDENCE', 'Passing test evidence must verify the current write generation; run tests after the last possible write');
+      if (attempt.result.execution.backend === 'docker') {
+        const current = await effectSnapshot(task.workspace.repository_identity, attempt.result.execution.paths);
+        this.#unchanged(task, context);
+        requireRuntime(current.fingerprint === artifact.repository_snapshot.fingerprint,
+          'INVALID_EVIDENCE', 'The tested files have changed since verification');
+      }
     }
     return artifact;
   }
@@ -270,7 +274,38 @@ export class HostRuntime {
     return this.#call('routeReview', request, (task, context) => task.controller.route(context.principal));
   }
   async acceptTask(request) {
-    return this.#call('acceptTask', request, (task, context, payload) => task.controller.accept(context.principal, payload.reason));
+    return this.#call('acceptTask', request, async (task, context, payload) => {
+      const snapshot = task.controller.snapshot;
+      requireRuntime(snapshot.state === 'HUMAN_ACCEPTANCE', 'INVALID_TRANSITION', 'Task is not waiting for Human acceptance');
+      const review = snapshot.reviews.R3;
+      const run = [...task.runs.values()].find(item => item.review_level === 'R3' && item.accepted === true
+        && item.accepted_cycle === cycle(task) && canonical(item.output) === canonical(review));
+      const operations = [...task.operations.values()].filter(item => item.cycle === cycle(task));
+      const testAttempts = operations.filter(item => item.result?.execution?.backend === 'docker'
+        && item.result.execution.writable === false && Number.isSafeInteger(item.test_write_generation) && item.evidence_ref);
+      if (!testAttempts.length) return task.controller.accept(context.principal, payload.reason);
+
+      const frozen = run?.accepted_evidence_refs
+        ?? [...new Set([...review.evidence, ...review.requirements.flatMap(item => item.evidence)])];
+      requireRuntime(testAttempts.some(item => frozen.includes(item.evidence_ref.artifact_ref)),
+        'INVALID_EVIDENCE', 'Human acceptance requires the reviewed Docker test evidence');
+      const operationRefs = new Map(operations.flatMap(item => (item.evidence_refs ?? [item.evidence_ref])
+        .filter(Boolean).map(ref => [ref.artifact_ref, ref])));
+      for (const id of frozen) {
+        const ref = operationRefs.get(id);
+        requireRuntime(ref, 'INVALID_EVIDENCE', 'Reviewed evidence is missing from the current execution cycle');
+        const artifact = await this.#verifyReviewArtifact(task, context, ref);
+        requireRuntime(artifact.status === 'pass', 'INVALID_EVIDENCE', 'Failed evidence cannot support Human acceptance');
+      }
+      this.#unchanged(task, context);
+      task.controller.accept(context.principal, payload.reason, { review_id: review.id, evidence: frozen });
+    });
+  }
+  async deferAcceptance(request) {
+    return this.#call('deferAcceptance', request, (task, context, payload) => {
+      record(payload, 'Deferred acceptance', ['reason']);
+      task.controller.deferAcceptance(context.principal, payload.reason);
+    });
   }
   async stopTask(request) {
     return this.#call('stopTask', request, (task, context, payload) => {
@@ -391,6 +426,9 @@ export class HostRuntime {
         task.runs.set(payload.run_id, jsonCopy({ ...run, status: run.status === 'RUNNING' ? 'FAILED' : run.status,
           accepted: false, external_execution_stopped: remoteStopped, reconciliation_required: !remoteStopped,
           error_code: error.code ?? 'AGENT_FAILED' }));
+        if (remoteStopped && payload.kind === 'implement' && error.code === 'AUTHORITY_BOUNDARY_EXCEEDED') {
+          task.controller.block(context.principal, 'AUTHORITY_BOUNDARY_EXCEEDED', error.message, [payload.run_id]);
+        }
         if (!remoteStopped && task.controller.state !== 'BLOCKED') task.controller.block(context.principal, 'MISSING_INFORMATION',
           'Agent execution ended without proof that the external run stopped', [payload.run_id]);
         throw error;
@@ -486,7 +524,9 @@ export class HostRuntime {
           && implementation && source.context.principal.id !== task.implementer && source.independent_review === true
           && source.review_boundary === 'independent-run'
           && source.provider_instance !== implementation.provider_instance && source.run_id !== implementation.run_id
-          && source.execution_binding?.thread_id !== implementation.execution_binding?.thread_id,
+          && ['thread_id', 'response_id'].some(key => source.execution_binding?.[key] || implementation.execution_binding?.[key])
+          && ['thread_id', 'response_id'].every(key => !source.execution_binding?.[key]
+            || source.execution_binding[key] !== implementation.execution_binding?.[key]),
         'AUTHORITY_BOUNDARY_EXCEEDED',
           'R3 must be the unchanged output of an independent real review run');
       }

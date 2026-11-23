@@ -50,7 +50,8 @@ M1 历史基线支持内存记录、fake Agent / ToolRunner、注册式 workspac
 | submitReport | ImplementationReport；ExecutionLifecycle.report |
 | submitReview | `{ review, evidence_refs }`；先验证 Artifact 引用，再 ExecutionLifecycle.applyReview |
 | routeReview | `{}`；ExecutionLifecycle.route |
-| acceptTask | `{ reason }`；ExecutionLifecycle.accept |
+| deferAcceptance | `{ reason? }`；认证 Human，在 HUMAN_ACCEPTANCE 记录暂缓理由和 R3 审查引用，保留待验收状态 |
+| acceptTask | `{ reason }`；认证 Human，重新核对已绑定实际测试结果的 R3 证据，记录审查 ID 和证据引用，再调用 ExecutionLifecycle.accept |
 | stopTask | `{ reason }`；认证 Human → override(state=BLOCKED)，不等待正在运行的任务锁 |
 | resumeTask | `{ resolution, discovery? }`；先对账所有未证明停止的真实 Agent/tool execution，再由宿主重新观察 Repository block 的 Discovery，最后调用 ExecutionLifecycle.resume；忽略外部伪造观察 |
 | recoverTask | 明确 UNSUPPORTED_CAPABILITY；不使用 JSON 重建已批准任务 |

@@ -11,6 +11,7 @@
     "schemas": "node scripts/export-schemas.mjs",
     "demo": "node examples/workflow.mjs",
     "demo:runtime": "node examples/runtime-workflow.mjs",
+    "chat": "node src/chat/cli.mjs",
     "runtime": "node src/runtime/cli.mjs"
   }
 }

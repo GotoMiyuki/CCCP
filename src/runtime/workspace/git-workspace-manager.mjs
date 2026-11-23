@@ -28,6 +28,10 @@ export class GitWorkspaceManager extends WorkspaceManager {
     this.leases = new RepositoryLease({ database, leaseMs, ...(clock ? { clock } : {}) });
   }
   async capabilities() { return { simulation: false, backend: 'git-worktree', durable: this.database.durable, cross_process: true }; }
+  static worktreePath(root, workspaceRef) {
+    nonempty(workspaceRef, 'workspace_ref');
+    return resolve(root, digest(workspaceRef).slice(0, 24));
+  }
   async register({ workspace_ref, repository, baseRevision = 'HEAD' }) {
     nonempty(workspace_ref, 'workspace_ref'); nonempty(baseRevision, 'baseRevision');
     const source = canonicalRepository(repository);
@@ -42,7 +46,7 @@ export class GitWorkspaceManager extends WorkspaceManager {
       // recovery coordinator stops old execution before validating Git state.
       return jsonCopy(value);
     }
-    const target = resolve(this.root, digest(workspace_ref).slice(0, 24));
+    const target = GitWorkspaceManager.worktreePath(this.root, workspace_ref);
     requireRuntime(inside(this.root, target), 'INVALID_WORKSPACE', 'Worktree destination must stay within managed root');
     try { await lstat(target); throw new Error('Managed destination already exists; will not overwrite it'); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }

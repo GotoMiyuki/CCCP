@@ -38,3 +38,19 @@ export function agentFileDelta({ sourceRunId, before, after }) {
     after_exists: file.exists, after_hash: file.content_hash, after_content_base64: file.content_base64,
     changed: before[index].content_hash !== file.content_hash })) };
 }
+
+// Give reviewers readable source alongside references to the original verified artifact.
+export function readableReviewInput(input) {
+  if (!Array.isArray(input.artifacts)) return input;
+  const readable_diffs = input.artifacts.flatMap(artifact => {
+    if (artifact.type !== 'DIFF' || artifact.content.length > 128 * 1024) return [];
+    let delta;
+    try { delta = JSON.parse(artifact.content); } catch { return []; }
+    if (delta?.format !== 'cccp-file-delta-v1' || !Array.isArray(delta.changes)) return [];
+    const decode = value => typeof value === 'string' ? Buffer.from(value, 'base64').toString('utf8') : null;
+    return [{ artifact_ref: artifact.artifact_ref, files: delta.changes.filter(change => change?.changed).map(change => ({
+      path: change.path, before: decode(change.before_content_base64), after: decode(change.after_content_base64),
+    })) }];
+  });
+  return readable_diffs.length ? { ...input, readable_diffs } : input;
+}

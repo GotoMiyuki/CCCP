@@ -1,0 +1,14 @@
+{
+  "project": {
+    "repository": "..",
+    "description": "CCCP 的本地 JavaScript 参考实现。请根据用户提供的上下文讨论需求。",
+    "allowed_paths": ["src", "tests"],
+    "verification_commands": [["node", "--test"]]
+  },
+  "chatting_agent": {
+    "provider": "deepseek-responses",
+    "model": "deepseek-flash",
+    "model_env": "CCCP_CHAT_MODEL",
+    "api_key_env": "DEEPSEEK_API_KEY"
+  }
+}
