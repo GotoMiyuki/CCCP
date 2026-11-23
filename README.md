@@ -4,6 +4,8 @@
 
 冻结语义以原始 Design Guide 为准。包版本 `0.2.0` 是实现版本，消息中的协议版本仍为 `1.0`。新增 Schema 和实现规范均为可审查的实现草案，未宣布冻结 CCCP v1.1。
 
+第一次使用请从[用户使用说明](docs/USER_GUIDE.md)开始，运行本地演示、查看自己的仓库，并了解如何参与真实任务的授权与验收。
+
 ## 运行
 
 需要 Node.js 22 或以上。Git Discovery 及 Git 集成测试还需要本机 Git。
@@ -61,6 +63,7 @@ Runtime 入口是 `HostRuntime.create({ providers, discovery? })`，通过 `src/
 | 本次实现与验证报告 | [docs/IMPLEMENTATION_REPORT.md](docs/IMPLEMENTATION_REPORT.md) |
 | 后续加固与回归结果 | [docs/OPTIMIZATION_REPORT.md](docs/OPTIMIZATION_REPORT.md) |
 | v0.2.0 开发总结、验证与验收状态 | [v0.2.0 开发总结](docs/development_logs/2026-11-19-v0.2.0-summary.md) |
+| CLI 交互宿主阶段 A–D 的开发与验证 | [CLI 交互开发日志](docs/development_logs/2026-11-23-interactive-cli.md) |
 | 九月 Host Runtime 开发记录 | [v0.2.0 阶段日志](docs/development_logs/2026-09-20-v0.2.0-host-runtime.md) |
 | 对外导出 | `src/index.mjs` |
 | 机器可读产物 | `schemas/` |

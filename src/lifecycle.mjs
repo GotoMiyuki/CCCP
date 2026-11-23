@@ -162,10 +162,16 @@ export class ExecutionLifecycle {
     this.#move(this.#routing.required ? 'ARCHITECTURE_REVIEW' : 'DONE', controllerActor, { routing: this.#routing });
     return this.#routing;
   }
-  accept(actor, reason) {
+  deferAcceptance(actor, reason = null) {
+    requireRole(actor, 'human'); this.#at('HUMAN_ACCEPTANCE');
+    assert(reason === null || typeof reason === 'string' && reason.trim(), 'MISSING_INFORMATION', 'Deferred acceptance reason must be meaningful when provided');
+    this.#audit.append('HUMAN_ACCEPTANCE_DEFERRED', actor, { reason, review_id: this.#reviews.R3.id });
+    this.#version++;
+  }
+  accept(actor, reason, proof) {
     requireRole(actor, 'human'); this.#at('HUMAN_ACCEPTANCE');
     assert(typeof reason === 'string' && reason.trim(), 'MISSING_INFORMATION', 'Human acceptance requires an explicit statement');
-    this.#move('DONE', actor, { acceptance: reason });
+    this.#move('DONE', actor, { acceptance: reason, ...(proof ? { review_id: proof.review_id, evidence: proof.evidence } : {}) });
   }
   requestReplan(actor, proposal) {
     requireRole(actor, 'codex', 'chatgpt', 'human'); check('ChangeProposal', proposal);

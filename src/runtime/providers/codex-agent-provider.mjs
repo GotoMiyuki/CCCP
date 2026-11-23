@@ -34,7 +34,7 @@ export function reviewOutputSchema(artifacts) {
   return schema;
 }
 
-const changeSchema = { type: 'array', minItems: 1, maxItems: 100, items: { type: 'object', additionalProperties: false,
+export const changeSchema = { type: 'array', minItems: 1, maxItems: 100, items: { type: 'object', additionalProperties: false,
   properties: { path: { type: 'string', minLength: 1 }, content: { type: 'string' } }, required: ['path', 'content'] } };
 
 function promptFor(kind, request) {
