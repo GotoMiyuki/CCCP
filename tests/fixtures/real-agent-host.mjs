@@ -56,3 +56,13 @@ export const operations = [
   { id: 'apply-agent-change', domain: 'internal_implementation', paths: ['src'], changes_decision: false, description: 'Apply the real Codex structured file change' },
   { id: 'run-fixture-tests', domain: 'test_implementation', paths: ['src', 'tests'], changes_decision: false, description: 'Run the fixture acceptance test' },
 ];
+
+export function appliedFixtureReport(candidate, applied, tested) {
+  const changedFiles = applied.file_delta.changes.filter(change => change.changed).map(change => change.path);
+  return {
+    ...candidate,
+    summary: `Docker applied the candidate to ${changedFiles.join(', ')} and the fixture test passed.`,
+    changed_files: changedFiles,
+    evidence: [applied.evidence_ref.artifact_ref, tested.evidence_ref.artifact_ref],
+  };
+}

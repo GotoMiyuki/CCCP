@@ -53,3 +53,29 @@
 新增 `DeepSeekReviewProvider`，使用 DeepSeek 的无状态 Responses API 和结构化输出。provider 明确记录 `deepseek-responses` / `deepseek-reviewer` provenance；不发送其不支持的 background、store 或 metadata 参数，不宣称远端 cancellation/recovery。常规测试不调用模型；`CCCP_DEEPSEEK_TESTS=1` 可单独执行低成本真实 API contract test，真实 Agent E2E 在设置 `DEEPSEEK_API_KEY` 时优先使用 DeepSeek reviewer。既有 ChatGPT/OpenAI M4 审计附件保持原样。
 
 本轮本地验证：新增 DeepSeek opt-in 后默认测试总数为 204，194 PASS、0 FAIL、10 个 Docker/真实 Agent opt-in SKIP；Schema/state artifact check 9 项通过，`git diff --check` 通过。后续真实验证结果和 v0.2.0 版本结论见 [v0.2.0 Host Runtime 开发日志](2026-09-20-v0.2.0-host-runtime.md)。
+
+## 2026-11-16 收尾
+
+- Runtime manifest 的实现版本同步为 `0.2.0`。
+- 真实 Review 在模型派发前校验 Artifact 是否属于当前执行周期的已记录操作，并核对快照。派发与提交共用校验逻辑。
+- 恢复后，将崩溃时仍在运行的模拟 Agent 记录为 `INTERRUPTED`。未确认停止的真实 Agent 仍须对账。真实 E2E 分别保留主流程错误与清理阶段错误。
+- 对真实 R3 给出的 Revision，补齐两个缺口。fixture 的最终报告以应用后的 DIFF 和真实测试结果为准，Review 输入提供冻结的 Human 审批与 Delegation。用例在验证最终状态前导出审计，供复核未通过的真实审查。
+- Windows 宿主串行本地回归 194 通过、0 失败、10 个外部测试跳过，Schema/state 检查 9 项通过。单独启用 Docker 的测试组 8/8 通过。真实 Agent 复测结果见 [M4 E2E 报告](../M4_E2E_REPORT.md)。
+
+修订后的源码和审计材料等待 [独立 R3 复审](../M4_R3_HANDOFF.md)。Human Acceptance 由 Human 在复审后决定。
+
+## 2026-11-17 独立 R3 复审：REJECT
+
+独立审查当前未提交工作树，发现同一执行周期内测试后继续修改时，旧 TEST_RUN 仍能通过真实 Review 派发/提交校验。受控 Host 探针得到测试快照 old、Review 快照 new、accepted=true，最终 HUMAN_ACCEPTANCE。需要在派发和提交时绑定测试与最终被审实现，并增加操作重排回归。完整位置、复现与退出条件见 [独立 R3 记录](../audit/m4/independent-r3.txt)。本次仅追加审查文档，未修复源码或修改测试。
+
+历史及最新正常/恢复附件的哈希、引用、审计链和身份隔离独立复核通过。本地回归 190 PASS、4 个 symlink EPERM 环境失败、10 SKIP；Schema/state 9 项通过。本次未重跑外部 E2E。M4 仍需修复后独立 R3，Human Acceptance 未发生。
+
+## 2026-11-17 F1 修订
+
+Host 从持久化工具 attempt 重建每个执行周期的写入代次。可能写入的操作使旧测试失效。真实通过的只读测试在 attempt 上保存已验证的代次，Review 派发和提交共用这一门禁。缺少绑定的历史通过测试需重测。该判断使用同一工具操作的前后快照与只读证明，无需比较不同挂载范围的指纹。
+
+新增四项回归，覆盖先测试后写入、测试后继续写入、无法确认只读的操作和最后一次写入后重测并恢复。Windows 沙箱内的 junction 创建探针返回 EPERM，宿主同一探针成功。宿主串行全量回归 198 通过、0 失败、10 个外部测试跳过，保留原有路径安全断言。最新真实 E2E 结果及术语边界见 [M4 E2E 报告](../M4_E2E_REPORT.md)。
+
+## 2026-11-17 F1 独立复审：APPROVE
+
+独立 Reviewer 检查当前未提交修订并关闭 F1。Review 派发与提交的写入代次门禁、恢复后新鲜测试的可用性均通过核验；额外受控探针未能重现原越界。Reviewer 实际宿主全量回归 198 PASS、0 FAIL、10 SKIP，Schema/state 9 项通过，最新正常/恢复附件独立复算通过。详细依据及测试边界见 [独立 R3 记录](../audit/m4/independent-r3.txt) 的最新追加结论。此次仅更新审查文档，未改动源码或测试。M4 可提交 Human Acceptance，尚未形成 Human 接受或 DONE。

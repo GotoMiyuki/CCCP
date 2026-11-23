@@ -140,6 +140,8 @@ test('unfinished and transport-failed real Agent runs fail closed until the orig
     reconciliation_required: true, external_execution_stopped: false, simulation: false,
     context: { task_id: 'durable-task', principal: codex, state_version: data.snapshot.state_version, delegation_ref: data.approval.delegation.id,
       workspace_ref: 'durable-workspace', correlation_id: 'failed' }, execution_binding: { backend: 'codex-app-server', pid: 424243, run_id: 'failed-agent' } });
+  data.agent_runs.push({ ...data.agent_runs.at(-1), run_id: 'simulated-agent', status: 'RUNNING',
+    simulation: true, reconciliation_required: false, external_execution_stopped: true, execution_binding: null });
   await state.compareAndSwap('durable-task', stored.store_revision, data); database.close();
   const provider = stopped => ({
     capabilities: async () => ({ simulation: false, backend: 'codex-app-server', cancellation: true, recovery: true, provider_id: 'recovery-agent' }),
@@ -150,8 +152,10 @@ test('unfinished and transport-failed real Agent runs fail closed until the orig
   await assert.rejects(sim.call('recoverTask', 'human'), raises('RECONCILIATION_REQUIRED')); sim.database.close();
   sim = await durableFixture(dir, { start: false, agent: provider(true) }); t.after(() => sim.database.close());
   await sim.call('recoverTask', 'human');
-  const runs = (await sim.call('inspectTask', 'human')).result.agent_runs.filter(item => ['orphan-agent', 'failed-agent'].includes(item.run_id));
-  assert.equal(runs.length, 2); assert.ok(runs.every(run => run.status === 'INTERRUPTED' && run.accepted === false && run.reconciliation.stopped));
+  const runs = (await sim.call('inspectTask', 'human')).result.agent_runs;
+  assert.equal(runs.length, 3);
+  assert.ok(runs.every(run => run.status === 'INTERRUPTED' && run.accepted === false && run.reconciliation.stopped));
+  assert.equal(runs.find(run => run.run_id === 'simulated-agent').reconciliation.reason, 'simulated_host_restart');
 });
 
 test('live resume reconciles an unverified real tool before another operation can run', async t => {
@@ -174,8 +178,8 @@ test('live resume reconciles an unverified real tool before another operation ca
   assert.equal((await sim.call('inspectTask', 'human')).result.operations[0].reconciliation.stopped, true);
 });
 
-test('a rejected independent R3 output cannot be resubmitted with a different evidence set', async t => {
-  let implementationOutput, reviewOutput;
+async function reviewFixture(t, order, { recover = false } = {}) {
+  let implementationOutput, reviewOutput, reviewInput;
   const run = (request, patch) => ({ ...request, kind: request.kind, provider: 'test-provider', status: 'COMPLETED',
     principal: request.context.principal, role: request.context.principal.role, termination_reason: 'completed',
     external_execution_stopped: true, simulation: false, ...patch });
@@ -193,39 +197,109 @@ test('a rejected independent R3 output cannot be resubmitted with a different ev
     capabilities: async () => ({ simulation: false, backend: 'openai-responses', cancellation: true, recovery: true, independent_review: true,
       provider_id: 'test-reviewer', review_boundary: 'independent-run' }),
     review: async () => {}, cancel: async () => true, inspect: async () => null, reconcile: async () => ({ stopped: true }),
-    dispatch(kind, request) { return { binding: { backend: 'openai-responses', response_id: 'review-response' }, result: Promise.resolve(run(request, {
-      kind, provider_kind: 'openai-reviewer', provider_instance: 'test-reviewer', independent_review: true, review_boundary: 'independent-run',
-      output: reviewOutput, execution_binding: { backend: 'openai-responses', response_id: 'review-response' },
-    })) }; },
+    dispatch(kind, request) {
+      reviewInput = request.input;
+      return { binding: { backend: 'openai-responses', response_id: 'review-response' }, result: Promise.resolve(run(request, {
+        kind, provider_kind: 'openai-reviewer', provider_instance: 'test-reviewer', independent_review: true, review_boundary: 'independent-run',
+        output: reviewOutput, execution_binding: { backend: 'openai-responses', response_id: 'review-response' },
+      })) };
+    },
   };
   const tool = {
     capabilities: async () => ({ simulation: false, backend: 'docker', sandbox: 'docker', cancellation: true, recovery: true }),
     describeAttempt: async ({ attempt_id }) => ({ backend: 'docker', identity: attempt_id }), cancel: async () => true,
     inspect: async () => null, reconcile: async () => ({ stopped: true }),
-    run: async request => ({ outcome: 'SUCCEEDED', stdout: '', stderr: '', exit_code: 0, process_tree_stopped: true,
-      repository_before: request.repository_snapshot, repository_after: request.repository_snapshot, simulation: false,
-      ...(request.agent_input ? { file_delta: { format: 'cccp-file-delta-v1', source_run_id: request.agent_input.source_run_id,
-        changes: [{ path: 'src/probe.txt', changed: true }] } } : {}) }),
+    run: async request => {
+      const writable = ['apply', 'later-write'].includes(request.operation.id);
+      // Different bindings can inventory different path scopes.
+      const before = { fingerprint: `${request.operation.id}-before` };
+      const after = writable ? { fingerprint: `${request.operation.id}-after` } : before;
+      return { outcome: 'SUCCEEDED', stdout: '', stderr: '', exit_code: 0, process_tree_stopped: true,
+        repository_before: before, repository_after: after, simulation: false,
+        ...(request.operation.id === 'unknown-write' ? {} : { execution: { writable } }),
+        ...(request.agent_input ? { file_delta: { format: 'cccp-file-delta-v1', source_run_id: request.agent_input.source_run_id,
+          changes: [{ path: 'src/probe.txt', changed: true }] } } : {}) };
+    },
   };
   const dir = await directory(); const agent = new RoutedAgentProvider({ implementer, reviewer });
-  const sim = await durableFixture(dir, { agent, tool, humanAcceptance: true }); t.after(() => sim.database.close());
+  const options = { agent, tool, humanAcceptance: true };
+  let sim = await durableFixture(dir, options); t.after(() => sim.database.close());
   await sim.call('discoverTask', 'codex');
-  const operations = [operationFixture({ id: 'apply' }), operationFixture({ id: 'test', domain: 'test_implementation' }), operationFixture({ id: 'extra' })];
+  const operations = order.map(id => operationFixture({ id, ...(id.startsWith('test') ? { domain: 'test_implementation' } : {}) }));
   await sim.call('planTask', 'codex', { summary: 'Independent review evidence binding probe', operations });
   const begun = await sim.call('beginTask', 'codex');
   implementationOutput = simulationReport(sim, begun.snapshot, { changed_files: [] });
   await sim.call('dispatchAgent', 'codex', { kind: 'implement', run_id: 'implementation', template_version: 'test', input: {} });
   const refs = [];
-  for (const id of ['apply', 'test', 'extra']) refs.push((await sim.call('executeTool', 'codex',
+  for (const id of order) refs.push((await sim.call('executeTool', 'codex',
     { operation_id: id, attempt_id: id, ...(id === 'apply' ? { agent_run_id: 'implementation' } : {}) }, { key: id })).result.evidence_ref);
   await sim.call('submitReport', 'codex', implementationOutput);
+  if (recover) {
+    await sim.host.close();
+    sim.database.close();
+    sim = await durableFixture(dir, { ...options, start: false, recover: true });
+  }
+  return { sim, refs, setReview: value => { reviewOutput = value; }, reviewInput: () => reviewInput };
+}
+
+test('a rejected independent R3 output cannot be resubmitted with a different evidence set', async t => {
+  const { sim, refs, setReview, reviewInput } = await reviewFixture(t, ['apply', 'test', 'extra']);
   for (const level of ['R1', 'R2']) await sim.call('submitReview', 'codex', { review: simulationReview(sim, level, refs[1]), evidence_refs: [refs[1]] });
   await sim.call('routeReview', 'codex');
-  reviewOutput = simulationReview(sim, 'R3', refs[2], { id: 'rejected-r3', reviewer: chatgpt });
+  const validTest = await sim.providers.evidence.verify(refs[1], { task_id: sim.context.task_id });
+  const unrecorded = await sim.providers.evidence.put({ ...validTest, content: 'Unrecorded test result' });
+  await assert.rejects(sim.call('dispatchAgent', 'chatgpt', { kind: 'review', review_level: 'R3', run_id: 'unrecorded-evidence',
+    template_version: 'test', input: { evidence_refs: [refs[0], unrecorded] } }), raises('INVALID_EVIDENCE'));
+  assert.ok(!(await sim.call('inspectTask', 'human')).result.agent_runs.some(run => run.run_id === 'unrecorded-evidence'));
+  const reviewOutput = simulationReview(sim, 'R3', refs[2], { id: 'rejected-r3', reviewer: chatgpt });
+  setReview(reviewOutput);
   await assert.rejects(sim.call('dispatchAgent', 'chatgpt', { kind: 'review', review_level: 'R3', run_id: 'rejected-r3-run',
     template_version: 'test', input: { evidence_refs: refs.slice(0, 2) } }), raises('INVALID_EVIDENCE'));
+  assert.equal(reviewInput().approval.actor.role, 'human');
+  assert.equal(reviewInput().approval.decision_id, reviewInput().decision.id);
+  assert.equal(reviewInput().delegation.id, sim.context.delegation_ref);
   const rejected = (await sim.call('inspectTask', 'human')).result.agent_runs.find(item => item.run_id === 'rejected-r3-run');
   assert.equal(rejected.status, 'COMPLETED'); assert.equal(rejected.accepted, false);
   await assert.rejects(sim.call('submitReview', 'chatgpt', { review: reviewOutput, evidence_refs: [refs[2]] }), raises('AUTHORITY_BOUNDARY_EXCEEDED'));
   assert.equal((await sim.call('inspectTask', 'human')).snapshot.state, 'ARCHITECTURE_REVIEW');
+});
+
+for (const order of [['test', 'apply'], ['apply', 'test', 'later-write'], ['apply', 'test', 'unknown-write']]) {
+  test(`real Review rejects stale test evidence after ${order.join(' → ')}`, async t => {
+    const { sim, refs, reviewInput } = await reviewFixture(t, order);
+    const diff = refs[order.indexOf('apply')], staleTest = refs[order.indexOf('test')];
+    const approve = (role, level, ref) => sim.call('submitReview', role, {
+      review: simulationReview(sim, level, ref, level === 'R3' ? { reviewer: chatgpt } : {}),
+      evidence_refs: ref === diff ? [diff] : [diff, ref],
+    });
+    for (const level of ['R1', 'R2']) {
+      await assert.rejects(approve('codex', level, staleTest), { code: 'INVALID_EVIDENCE', message: /current write generation/ });
+      await approve('codex', level, diff);
+    }
+    await sim.call('routeReview', 'codex');
+    await assert.rejects(sim.call('dispatchAgent', 'chatgpt', { kind: 'review', review_level: 'R3', run_id: 'stale-r3',
+      template_version: 'test', input: { evidence_refs: [diff, staleTest] } }),
+    { code: 'INVALID_EVIDENCE', message: /current write generation/ });
+    assert.equal(reviewInput(), undefined);
+    await assert.rejects(approve('chatgpt', 'R3', staleTest), { code: 'INVALID_EVIDENCE', message: /current write generation/ });
+    assert.equal((await sim.call('inspectTask', 'human')).snapshot.state, 'ARCHITECTURE_REVIEW');
+  });
+}
+
+test('a fresh read-only retest supports independent approval after Host recovery', async t => {
+  const { sim, refs: [diff, staleTest, , freshTest], setReview } =
+    await reviewFixture(t, ['apply', 'test', 'later-write', 'test-again', 'extra'], { recover: true });
+  await assert.rejects(sim.call('submitReview', 'codex', {
+    review: simulationReview(sim, 'R1', staleTest), evidence_refs: [staleTest],
+  }), raises('INVALID_EVIDENCE'));
+  for (const level of ['R1', 'R2']) await sim.call('submitReview', 'codex', {
+    review: simulationReview(sim, level, freshTest), evidence_refs: [freshTest],
+  });
+  await sim.call('routeReview', 'codex');
+  const review = simulationReview(sim, 'R3', freshTest, { reviewer: chatgpt });
+  setReview(review);
+  const evidence_refs = [diff, freshTest];
+  await sim.call('dispatchAgent', 'chatgpt', { kind: 'review', review_level: 'R3', run_id: 'fresh-r3',
+    template_version: 'test', input: { evidence_refs } });
+  assert.equal((await sim.call('submitReview', 'chatgpt', { review, evidence_refs })).snapshot.state, 'HUMAN_ACCEPTANCE');
 });
